@@ -20,7 +20,7 @@ console.log('ciphertext: ', ciphertext);
 
 
 // Seller
-key.generateKeyPair(); //default
+// key.generateKeyPair(); //default
 key.importKey(private_key,'pkcs1-private-pem');
 
 const decrypted = key.decrypt(ciphertext, 'utf8');

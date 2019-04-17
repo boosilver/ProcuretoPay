@@ -1,3 +1,5 @@
+var crypto = require('crypto');
+// var crypto = require('crypto');
 const logger = require('../utils/logger');
 const blockchain = require('../blockchain/service');
 const fs = require("fs")
@@ -98,18 +100,22 @@ class toBC {
                 };
                 var pemFile = path.resolve(__dirname,`./${COMPANY}/public_key.pem`)
                 var keypublic =fs.readFileSync(pemFile)
-                console.log(keypublic.toString('utf8'))
+                // console.log(keypublic.toString('utf8'))
                 const key = new NodeRSA();
                 key.importKey(keypublic.toString(),'pkcs1-public-pem');
-                console.log(keypublic.toString('utf8'))
+                // console.log(keypublic.toString('utf8'))
                 const ciphertext = key.encrypt(parsedAttrs, 'base64', 'utf8');
-                // console.log('ciphertext: ', ciphertext);
+                console.log('ciphertext: ', ciphertext);
+                var hash = crypto.createHash('sha256')          //HASH FUCTION
+                .update(ciphertext)
+                .digest('hex');
+                console.log('HASH Ciphertext Complete!!! : ', hash)
                 let args =[ciphertext,
-                    parsedAttrs.KEY
+                    hash
                 ];
 
                 ///////////////////////////////////
-                console.log('parsedAttrs:' + parsedAttrs);
+                // console.log('parsedAttrs:' + parsedAttrs);
                 // const decrypted = key.decrypt(ciphertext, 'utf8');
                 // console.log("-++-+--+-+-++---*-**/***/*//*/*/*---*-*//*/*-");
                 // console.log('xxx: ', args);
@@ -125,7 +131,7 @@ class toBC {
                           if (err) throw err;
                           console.log("Collection created!");
                           var myobj = [
-                            { _id: parsedAttrs.KEY, TO: ciphertext}
+                            { _id: hash, TO: ciphertext}
                           ];
                           dbo.collection("MyData").insertMany(myobj, function(err, res) { //insertMany
                             if (err) throw err;
@@ -179,14 +185,18 @@ class toBC {
                 };
                 var pemFile = path.resolve(__dirname,`./${COMPANY}/public_key.pem`)
                 var keypublic =fs.readFileSync(pemFile)
-                console.log(keypublic.toString('utf8'))
+                // console.log(keypublic.toString('utf8'))
                 const key = new NodeRSA();
                 key.importKey(keypublic.toString(),'pkcs1-public-pem');
-                console.log(keypublic.toString('utf8'))
+                // console.log(keypublic.toString('utf8'))
                 const ciphertext = key.encrypt(parsedAttrs, 'base64', 'utf8');
-                // console.log('ciphertext: ', ciphertext);
+                console.log('ciphertext: ', ciphertext);
+                var hash = crypto.createHash('sha256')          //HASH FUCTION
+                .update(ciphertext)
+                .digest('hex');
+                console.log('HASH Ciphertext Complete!!! : ', hash)
                 let args =[ciphertext,
-                    parsedAttrs.KEY
+                    hash
                 ];
                 console.log('parsedAttrs:' + parsedAttrs);
                 blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, args, INVOKE_ATTRIBUTES).then((result) => {
@@ -201,7 +211,7 @@ class toBC {
                           if (err) throw err;
                           console.log("Collection created!");
                           var myobj = [
-                            { _id: parsedAttrs.KEY, TO: ciphertext}
+                            { _id: hash, TO: ciphertext}
                           ];
                           dbo.collection("MyData").insertMany(myobj, function(err, res) { //insertMany
                             if (err) throw err;
@@ -334,13 +344,7 @@ class toBC {
             });
         });
     }
-
-    
-}
-
-module.exports = toBC;
-
-    /**
+       /**
  * GenerateKeyPair
  * @method post
  * @description - Generate key for company
@@ -390,5 +394,10 @@ module.exports = toBC;
 
 
     }
+  
+
+    
 }
+
+
 module.exports = toBC;
