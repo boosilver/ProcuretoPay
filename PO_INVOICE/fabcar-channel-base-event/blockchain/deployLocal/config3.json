@@ -1,0 +1,35 @@
+{
+    "blockchain": {
+        "type": "hlfv1",
+        "orderers": [{
+            "url": "grpc://localhost:7050",
+            "sslHostname": "localhost",
+            "cert": ""
+        }],
+        "ca": {
+            "url": "http://localhost:9054",
+            "name": "ca3.example.com",
+            "cert": ""
+        },
+        "peers": [{
+            "requestURL": "grpc://localhost:9051",
+            "eventUrl": "grpc://localhost:9053",
+            "sslHostname": "localhost",
+            "cert": ""
+        }
+        ],
+        "keyValStore": {
+            "fileSystem": "blockchain/deployLocal/user3/hfc-key-store/"
+        },
+        "channel": "privatechannel3",
+        "chaincodeId": "fabcarevent",
+       
+        "mspId": "Org3MSP",
+        "organizationId": "org3",
+        "adminCredentials": {
+            "enrollmentId": "admin",
+            "enrollmentSecret": "adminpw"
+        },
+        "timeout": 300000
+    }
+}
