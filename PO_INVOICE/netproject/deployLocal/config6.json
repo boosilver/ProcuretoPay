@@ -1,0 +1,35 @@
+{
+    "blockchain": {
+        "type": "hlfv1",
+        "orderers": [{
+            "url": "grpc://localhost:7050",
+            "sslHostname": "localhost",
+            "cert": ""
+        }],
+        "ca": {
+            "url": "http://localhost:10054",
+            "name": "ca1.example.com",
+            "cert": ""
+        },
+        "peers": [{
+            "requestURL": "grpc://localhost:1251",
+            "eventUrl": "grpc://localhost:1253",
+            "sslHostname": "localhost",
+            "cert": ""
+        }
+        ],
+        "keyValStore": {
+            "fileSystem": "blockchain/deployLocal/user6/hfc-key-store/"
+        },
+        "channel": "mychannel",
+        "chaincodeId": "fabcar",
+       
+        "mspId": "Org4MSP",
+        "organizationId": "org4",
+        "adminCredentials": {
+            "enrollmentId": "admin",
+            "enrollmentSecret": "adminpw"
+        },
+        "timeout": 300000
+    }
+}
