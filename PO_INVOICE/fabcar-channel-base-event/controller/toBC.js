@@ -23,8 +23,7 @@ const StoreKey = 'StoreKey'; //func
 
 
 
-var fs = require('fs');
-var file = __dirname + '/config.json';
+
 /**
  * Parsing parameters from the object received
  * from client and using default values
@@ -54,6 +53,30 @@ function ParseCheckPO(unparsedAttrs) { //for cheak CheckBalance
             resolve([
                 (parsedAttrs.ID).toString(),
                 parsedAttrs.USER.toString(),
+            ])
+        } catch (e) {
+            logger.error(`${functionName} Parsing attributes failed ${e}`);
+            reject(`Sorry could not parse attributes: ${e}`);
+        }
+
+    });
+}
+function ParseKeyStore(WORLDSTATE_KEY, PUBLIC_KEY) { //for cheak CheckBalance
+    let functionName = '[toBC.ParseKeyStore(WORLDSTATE_KEY, PUBLIC_KEY)]';
+
+    return new Promise((resolve, reject) => {
+
+        let parsedAttrs = {};
+        //new kvs().putStore(inv_identity,unparsedAttrs)
+
+        try {   
+            parsedAttrs = { //รับมาจาก json
+                WORLDSTATE_KEY: WORLDSTATE_KEY || '',
+                PUBLIC_KEY: PUBLIC_KEY || '',
+            }
+            resolve([
+                parsedAttrs.WORLDSTATE_KEY.toString(),
+                parsedAttrs.PUBLIC_KEY.toString()
             ])
         } catch (e) {
             logger.error(`${functionName} Parsing attributes failed ${e}`);
@@ -359,83 +382,55 @@ class toBC {
  * @param {Object}req - CompanyInfo{Name,Role,ID}
  * @param {Object}res - KeyPair of each Company
  */
-    GenerateKeyPair(CompanyInfo) {
-        return new Promise((resolve, reject) => {
+GenerateKeyPair(CompanyInfo) {
+    var self = this;
+    let functionName = '[toBC.GenerateKeyPair(CompanyInfo)]';
+    logger.debug(self.enrollID);
+    console.log(self.enrollID);
+    return new Promise((resolve, reject) => {
 
-            let Public_key, Private_key = keypair.generatekeypair(CompanyInfo.Name)
-            var WorldState_key = (CompanyInfo.ID + "|" + CompanyInfo.Role)
-            console.log('Add local db');
+        let infokey = keypair.generatekeypair(CompanyInfo.Name)
+        var WorldState_key = (CompanyInfo.ID + "|" + CompanyInfo.Role)
+        console.log('Add local db');
+        console.log('Add world state : '+WorldState_key);
+        console.log('Add Public key : '+infokey.Publickey);
+    // console.log("Infokeyyyyyyyyyyyyyyyyyyyyyyyy",infokey)
 
-            MongoClient.connect(url, function(err, db) { //connect DB url
-                if (err) throw err;
-                var dbo = db.db("key private");
-                var dbo2 = db.db("key public");
-                dbo.createCollection("MyData", function(err, res) { //create collection 
-                  if (err) throw err;
-                  console.log("Collection created!");
-                  var myobj = [
-                    { _id: WorldState_key, Privatekey: Private_key}
-                  ];
-                  dbo.collection("MyData").insertMany(myobj, function(err, res) { //insertMany
-                    if (err) throw err;
-                    console.log("Number of documents inserted: " + res.insertedCount);
-                  db.close();
+
+        let invokeObject = {};
+        ParseKeyStore(WorldState_key,infokey.Publickey).then((parsedAttrs) => {
+            invokeObject = {
+                enrollID: self.enrollID,
+                fcnname: StoreKey,
+                attrs: parsedAttrs
+            };
+            console.log('parsedAttrs:' + parsedAttrs);
+            blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, invokeObject.attrs, INVOKE_ATTRIBUTES).then((result) => {
+                // let resultParsed = JSON.parse(result.result.toString('utf8'));
+                // let resultParsed = result.result.toString('utf8'); 
+                resolve({
+                    message: {
+                        CompanyName: CompanyInfo.Name,
+                        WorldState_Key: WorldState_key,
+                        Public_Key: infokey.Publickey,
+                        Private_Key: infokey.Privatekey
+
+
+                    }
                 });
-              });
-              dbo2.createCollection("MyData", function(err, res) { //create collection 
-                if (err) throw err;
-                console.log("Collection created!");
-                var myobj = [
-                  { _id: WorldState_key, Publickey: Public_key}
-                ];
-                dbo2.collection("MyData").insertMany(myobj, function(err, res) { //insertMany
-                  if (err) throw err;
-                  console.log("Number of documents inserted: " + res.insertedCount);
-                db.close();
-              });
+            }).catch((e) => {
+                logger.error(`${functionName}  ${e}`);
+                reject(` ${e}`);
             });
-              })
-
-            console.log('Add world state');
-            let invokeObject = {};
-            ParseKeyStore(CompanyInfo).then((parsedAttrs) => {
-                invokeObject = {
-                    enrollID: self.enrollID,
-                    fcnname: StoreKey,
-                    attrs: parsedAttrs
-                };
-                console.log('parsedAttrs:' + parsedAttrs);
-                blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, args, INVOKE_ATTRIBUTES).then((result) => {
-                    // let resultParsed = JSON.parse(result.result.toString('utf8'));
-                    // let resultParsed = result.result.toString('utf8'); 
-                    resolve({
-                        message: {
-                            CompanyName: CompanyInfo.Name,
-                            WorldState_Key: WorldState_key,
-                            Public_Key: Public_key,
-                            Private_Key: Private_key
 
 
-                        }
-                    });
-                }).catch((e) => {
-                    logger.error(`${functionName}  ${e}`);
-                    reject(` ${e}`);
-                });
-
-
-
-            })
 
         })
 
+    })
 
 
-    }
-  
 
-    
 }
-
-
+}
 module.exports = toBC;
