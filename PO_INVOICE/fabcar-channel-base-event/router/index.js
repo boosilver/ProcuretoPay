@@ -56,7 +56,6 @@ app.post('/Genkey', function (req, res, next) {
 //#############################################################################
 //############################### BUYER #######################################
 //#############################################################################
-
 app.post('/CreatePO', function (req, res, next) {
   let functionName = '[API: POST /api/v1/CreatePO]';
   getFORM(req.body).then((getkey) => {
@@ -77,10 +76,29 @@ new toBC(bcuserName).CreatePO(req.body).then((result) => {
 })
   
 });
+app.post('/CheckPO', function (req, res, next) {
+  let functionName = '[API: POST /api/v1/CheckPO]';
+
+  getUser(req.body).then((getkey) => {
+    const bcuserName = `${getkey}`
+new toBC(bcuserName).CheckPO(req.body).then((result) => {
+    res.status(201);
+    res.json(result.message);
+  })
+  .catch((error) => {
+    logger.error(`${functionName} Failed to check new Service Request: ${error}`);
+    res.status(500);
+    res.json({
+      code: 500,
+      message: `Failed to check new Service Request: ${error}`
+    });
+  });
+})
+  
+}); 
 //#############################################################################
 //############################### SELLER #######################################
 //#############################################################################
-
 app.post('/CreateInvoice', function (req, res, next) {
   let functionName = '[API: POST /api/v1/CreateInvoice]';
   getFORM(req.body).then((getkey) => {
@@ -120,26 +138,7 @@ new toBC(bcuserName).CheckInvoice(req.body).then((result) => {
 })
   
 }); 
-app.post('/CheckPO', function (req, res, next) {
-  let functionName = '[API: POST /api/v1/CheckPO]';
 
-  getUser(req.body).then((getkey) => {
-    const bcuserName = `${getkey}`
-new toBC(bcuserName).CheckPO(req.body).then((result) => {
-    res.status(201);
-    res.json(result.message);
-  })
-  .catch((error) => {
-    logger.error(`${functionName} Failed to check new Service Request: ${error}`);
-    res.status(500);
-    res.json({
-      code: 500,
-      message: `Failed to check new Service Request: ${error}`
-    });
-  });
-})
-  
-}); 
 //#############################################################################
 //############################### ADMIN #######################################
 //#############################################################################
@@ -149,20 +148,21 @@ app.post('/admin/generatekeypair', function (req, res, next) {
 
   getUser(req.body).then((getkey) => {
     const bcuserName = `${getkey}`
+    logger.debug(bcuserName);
     new toBC(bcuserName).GenerateKeyPair(req.body).then((result) => {
-    res.status(201);
-    res.json(result.message);
+      res.status(201);
+      res.json(result.message);
+    })
+      .catch((error) => {
+        logger.error(`${functionName} Failed to check new Service Request: ${error}`);
+        res.status(500);
+        res.json({
+          code: 500,
+          message: `Failed to check new Service Request: ${error}`
+        });
+      });
   })
-  .catch((error) => {
-    logger.error(`${functionName} Failed to check new Service Request: ${error}`);
-    res.status(500);
-    res.json({
-      code: 500,
-      message: `Failed to check new Service Request: ${error}`
-    });
-  });
-})
-  
-}); 
+
+});
 
 module.exports = app;

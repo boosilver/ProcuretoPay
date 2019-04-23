@@ -167,6 +167,7 @@ function invoke(enrollmentId, fcn, args, attrs /* deprecated attribute */, isQue
         (() => {
             // logger.debug(`${functionName} Checking if user ${enrollmentId} is not revoked.`);
             // console.log(enrollmentId + "+++++++++++++++++++++++++++++++++++++++++++++++++++++")
+            console.log("SERVICE")
             console.log(args + "+++++++++++++++++++++++++++++++++++++++++++++++++++++")
             return _keyValueStore.getValue(enrollmentId);
         })()

@@ -14,7 +14,8 @@ var ChannelEventArray = []
 var fabric_client = new Fabric_Client();
 var peer = fabric_client.newPeer('grpc://localhost:7051');
 var order = fabric_client.newOrderer('grpc://localhost:7050')
-
+const NodeRSA = require('node-rsa');
+const fs = require("fs")
 // setup the fabric network
 // var channel = fabric_client.newChannel('privatechannel1');
 //  var channel2 = fabric_client.newChannel('privatechannel2');
@@ -68,10 +69,30 @@ return 1
         (event, block_num, txnid, status) => {
            // console.log(event)
             // console.log(ChannelEvent.lastBlockNumber())
-            let bufferOriginal = Buffer.from(JSON.parse(JSON.stringify(event.payload)).data); 
-            let StringUnicod = bufferOriginal.toString('utf8')
+            // let bufferOriginal = Buffer.from(JSON.parse(JSON.stringify(event.payload)).data); 
+            // let StringUnicod = bufferOriginal.toString('utf8')
             // var  money =parseInt(StringUnicod, 10);
-            console.log(StringUnicod+"   in block number : "+block_num)
+            var results = JSON.parse(event.payload.toString('utf8'))
+            console.log("---------------------------------------")
+            // console.log("KEY : "+results.KEY)
+            // console.log("VALUE : "+results.VALUE+"\n   in block number : "+block_num)
+            var decrypted 
+            const key = new NodeRSA();
+            var pemFile = path.resolve(__dirname,`../../../controller/LOTUS/private_key.pem`)
+            var keyprivate =fs.readFileSync(pemFile)
+            key.importKey(keyprivate,'pkcs1-private-pem');
+
+            
+            try {
+                const decrypted = key.decrypt(results.VALUE, 'utf8');
+                console.log('decrypted: ', decrypted);
+                if (decrypted == all) {
+                    console.log('--------- correct salt -----------')
+                }
+            
+            } catch (error) {
+                // console.log(error)
+            }
         },
         (err) => {
             ChannelEvent.unregisterChaincodeEvent(ChainCodeEvent);

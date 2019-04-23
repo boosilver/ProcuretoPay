@@ -63,12 +63,14 @@ exports.generatekeypair = function (DirName) {
             console.log('Write file private key pem success');
         });
         console.log("Create and write folder Success!!!")
+        console.log("0000000000000000000000000000000000000000")
         return Public_key,Private_key;
     } catch (error){
         // fs.rmdir(dir)
         return "Error "+error;
 
     }
+    
 
     // -------------------------------------------- END Create File and Folder -----------------------------------
 
