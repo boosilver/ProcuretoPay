@@ -13,21 +13,21 @@ import (
 type FundTransferChaincode struct {
 }
 type USER_INFORMATION struct {
-	USER_ID      string   `jason:"USER_ID"`
+	USER_ID      string   `json:"USER_ID"`
 	USER_HISTORY []string //IN STRING IS PO DATA
 	SHOW_HISTORY []string
 }
 type PO_INFORMATION struct {
-	VALUE string `jason:"PO_ID"`
-	KEY   string `jason:"FORM"`
+	VALUE string `json:"PO_ID"`
+	KEY   string `json:"FORM"`
 }
 type INVOICE_INFORMATION struct {
-	KEY   string `jason:"KEY"`
-	VALUE string `jason:"VALUE"`
+	KEY   string `json:"KEY"`
+	VALUE string `json:"VALUE"`
 }
 type STORE_KEY struct {
-	WORLDSTATE_KEY string `jason:"WORLDSTATE_KEY"`
-	PUBLIC_KEY     string `jason:"PUBLIC_KEY"`
+	COMPANYNAME string `json:"COMPANYNAME"`
+	PUBLIC_KEY     string `json:"PUBLIC_KEY"`
 }
 
 var line = ("-------------------------------------------------------------------------------")
@@ -72,8 +72,8 @@ func (t *FundTransferChaincode) CreatePO(stub shim.ChaincodeStubInterface, args 
 	if len(args) != 2 {
 		return shim.Error("Incorrect number of arguments ")
 	}
-	VALUE = args[0]
-	KEY = args[1]
+	KEY = args[0]
+	VALUE = args[1]
 	CREATE_PO, err := stub.GetState(KEY) /// ของจริงใช้คีย์เป็น แฮด
 	if err != nil {
 		fmt.Println(err)
@@ -180,13 +180,13 @@ func (t *FundTransferChaincode) CheckUser(stub shim.ChaincodeStubInterface, args
 //#############################################################################
 
 func (t *FundTransferChaincode) StoreKey(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	var WORLDSTATE_KEY string
+	var COMPANYNAME string
 	var PUBLIC_KEY string
 	var err error
 	if len(args) != 2 {
 		return shim.Error("Incorrect number of arguments 2")
 	}
-	WORLDSTATE_KEY = args[0]
+	COMPANYNAME = args[0]
 	PUBLIC_KEY = args[1]
 	// CREATE_PO, err := stub.GetState(KEY) /// ของจริงใช้คีย์เป็น แฮด
 	// if err != nil {
@@ -198,7 +198,7 @@ func (t *FundTransferChaincode) StoreKey(stub shim.ChaincodeStubInterface, args 
 	// }
 
 	STORE_KEY_DATA := STORE_KEY{
-		WORLDSTATE_KEY: WORLDSTATE_KEY,
+		COMPANYNAME: COMPANYNAME,
 		PUBLIC_KEY:     PUBLIC_KEY,
 	}
 	STORE_KEY_MARSHAL, err := json.Marshal(STORE_KEY_DATA) //make byte arrays
@@ -207,7 +207,7 @@ func (t *FundTransferChaincode) StoreKey(stub shim.ChaincodeStubInterface, args 
 		return shim.Error("Can't Marshal create store key")
 	}
 
-	err = stub.PutState(WORLDSTATE_KEY, STORE_KEY_MARSHAL) /// ของจริงใช้คีย์เป็น แฮด
+	err = stub.PutState(COMPANYNAME, STORE_KEY_MARSHAL) /// ของจริงใช้คีย์เป็น แฮด
 	if err != nil {
 		fmt.Print("err")
 		return shim.Error("can't put stub ")
