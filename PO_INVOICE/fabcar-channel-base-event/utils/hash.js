@@ -13,7 +13,7 @@ exports.hash = function(data){
     var hash = crypto.createHash('sha256')          //HASH FUCTION
     .update(data)
     .digest('hex');
-    console.log('HASH Ciphertext Complete!!! : ', data)
-    return data;
+    // console.log('HASH Ciphertext Complete!!! : ', hash)
+    return hash;
 
 }

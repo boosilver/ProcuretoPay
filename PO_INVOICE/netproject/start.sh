@@ -9,7 +9,7 @@ set -ev
 
 # don't rewrite paths for Windows Git Bash users
 export MSYS_NO_PATHCONV=1
-CC_SRC_PATH=github.com/fabcar/go/projectkmitl
+CC_SRC_PATH=github.com/chaincode_example_channel_base_event/go
 docker-compose -f docker-compose.yml down
 
 docker-compose -f docker-compose.yml up -d ca1.example.com ca2.example.com ca3.example.com ca4.example.com orderer.example.com peer0.org1.example.com peer1.org1.example.com peer0.org2.example.com peer1.org2.example.com peer0.org3.example.com peer0.org4.example.com  cli  couchdb
