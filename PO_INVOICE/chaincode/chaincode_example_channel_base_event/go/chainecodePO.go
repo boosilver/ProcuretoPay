@@ -47,6 +47,8 @@ func (t *FundTransferChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Resp
 		return t.CheckUser(stub, args)
 	} else if function == "StoreKey" {
 		return t.StoreKey(stub, args)
+	} else if function == "PushInBlockchain" {
+		return t.PushInBlockchain(stub, args)
 	}
 	// } else if function == "CheckPO" {
 	// 	return t.CheckPO(stub, args)
@@ -119,8 +121,8 @@ func (t *FundTransferChaincode) CreateInvoice(stub shim.ChaincodeStubInterface, 
 	if len(args) != 2 {
 		return shim.Error("Incorrect number of arguments  ")
 	}
-	VALUE = args[0]
-	KEY = args[1]                                 ///
+	KEY = args[0]   
+	VALUE = args[1]                              ///
 	CHEACK_INVOICE_KEY, err := stub.GetState(KEY) /// ของจริงใช้ แฮดแทน
 	if err != nil {
 		fmt.Println(err)
@@ -152,8 +154,55 @@ func (t *FundTransferChaincode) CreateInvoice(stub shim.ChaincodeStubInterface, 
 	Payload := []byte(INVOICE_MARSHAL)
 	stub.SetEvent("event", Payload) ///เก็บลอง event
 	///////////////////////////// History
-	return shim.Success(nil)
+	return shim.Success(INVOICE_MARSHAL)
 }
+//#############################################################################
+//############################### BANK #######################################
+//#############################################################################
+func (t *FundTransferChaincode) PushInBlockchain(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	var KEY string
+	var VALUE string
+	if len(args) != 2 {
+		return shim.Error("Incorrect number of arguments  ")
+	}
+	KEY = args[0]   
+	VALUE = args[1]                              ///
+	CHEACK_INVOICE_KEY, err := stub.GetState(KEY) /// ของจริงใช้ แฮดแทน
+	if err != nil {
+		fmt.Println(err)
+		return shim.Error("Failed to get state1")
+	}
+	if CHEACK_INVOICE_KEY != nil {
+		return shim.Error("this invoice number has already been used ") //////เช็คว่ามีอินวอยใบนี้หรือยัง ซ้ำไหม
+	}
+	var INVOICE_INFORMATION = INVOICE_INFORMATION{ ///เก็บค่าลง invoice
+		KEY:   KEY,
+		VALUE: VALUE,
+	}
+	INVOICE_MARSHAL, err := json.Marshal(INVOICE_INFORMATION)
+	if err != nil {
+		fmt.Print(err)
+		return shim.Error("Can't Marshal creat INVOICE")
+	}
+	if INVOICE_MARSHAL == nil {
+		return shim.Error("Marshal havn't value")
+	}
+	err = stub.PutState(KEY, INVOICE_MARSHAL) /// ของจริงใช้แฮด
+	if err != nil {
+		fmt.Print("err")
+		return shim.Error("can't put stub ")
+	}
+	fmt.Println(lineIvoice)
+	fmt.Println("VALUE = " + VALUE + "\n" + "KEY = " + KEY)
+	fmt.Println(line)
+	Payload := []byte(INVOICE_MARSHAL)
+	stub.SetEvent("event", Payload) ///เก็บลอง event
+	///////////////////////////// History
+	return shim.Success(INVOICE_MARSHAL)
+}
+//#############################################################################
+//############################### GET #######################################
+//#############################################################################
 func (t *FundTransferChaincode) CheckUser(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	var ID string
 	var USER string
