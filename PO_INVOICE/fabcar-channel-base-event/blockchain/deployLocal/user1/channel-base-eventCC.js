@@ -1,3 +1,6 @@
+const db = require('../../../utils/utilsdb')
+const onewayfunction = require('../../../utils/hash')
+
 
 'use strict';
 
@@ -76,15 +79,22 @@ return 1
             console.log("---------------------------------------")
             // console.log("KEY : "+results.KEY)
             // console.log("VALUE : "+results.VALUE+"\n   in block number : "+block_num)
-            var decrypted 
+            
+            //decrypt
             const key = new NodeRSA();
-            var pemFile = path.resolve(__dirname,`../../../controller/LOTUS/private_key.pem`)
-            var keyprivate =fs.readFileSync(pemFile)
-            key.importKey(keyprivate,'pkcs1-private-pem');
-
+            var identity = onewayfunction.hash(results)
+            // var pemFile = path.resolve(__dirname,`../../../controller/LOTUS/private_key.pem`)
+            // var keyprivate =fs.readFileSync(pemFile)
+            key.importKey(privatekey,'pkcs1-private-pem');
             
             try {
                 const decrypted = key.decrypt(results.VALUE, 'utf8');
+                var salt = decrypted.salt
+                var id = decrypted.id
+                var hash = identity
+                
+                console.log(salt,id,hash,'+++++++++++++++++++++++++++++++')
+                
                 console.log('decrypted: ', decrypted);
                 if (decrypted == all) {
                     console.log('--------- correct salt -----------')
@@ -104,6 +114,33 @@ return 1
     ChannelEvent.connect(true)
 });
 
+var privatekey = "-----BEGIN RSA PRIVATE KEY-----
+MIIEowIBAAKCAQEAmczrQpS+iv0bo9lN3nW1UnlLFxK0/trrDPiPPmZBV7KSZ7cm
+M1lfNqwq/r513p21lqBBEW+XNfsrLHRzgSF7DK7aG3G5PCgcBL2SKYY0tGavTiyO
+IF0NIYyt+eKBXM4bU5DPeSP3FY338XRWyQGgnikc9Meo++qjmUBYvRCOw+ZhVus/
+XTzpAahuv0/uJFagEgg9z+UwXOqq1qnxSPA+Ao+6GQBWiO9EKNyUpLyaRGffUK19
+f6im4g5tZcEpbm1A222wmN9gAKtdQPBrWofU9CPEwtCdkpB7NNy7iIauWSK+Nsnx
+wF79j01wrgSOPRsxbAsU6ReY1uACXxbENcTglQIDAQABAoIBAHYrXm8vvh8oTf5c
+TloocoLFsw4tT2epaIP0zoqRIo9xItARhoZZmrB1JCvKxuGepxDuXFA7PyE4tHlZ
+mA2VXefmyKnhfQNdhfmWdiD1frVFWFhmH2V6WUZ3woyGngJiUdipIN/g5E1pYSHh
+03RpjbE3wYnJhmrYY46yQ/wwJqEYxrF3IGJaM03AoCw2W2o970yx0ck5piNn2pmt
+wykj1tV8WM8zh4telHAr+ppnSUvLGIC5GncAkLQdUBAGEMqkhaZz1fdWva0+wkLp
+pHRnLoWvh1eOkuvE4ckI6eFBqtXZiJi6AZ+7bOZDHIEDfLAwj6Cos6kW6DkrPoIj
+3Yf7K8ECgYEAx3Eppl6Rdmgywv8CuzHxDzKZp+ttdgZb/iU445tESfRLXF9+ALV6
+NUIsCYPjPEUEPQeopCY8uL1TXivhYPYhOwMU0Ji5h5UUdJIeRYm1/D22VwRqIyiQ
+J7q1zP2zvZqhdt8gzvUZSkE2rGEdhLHmzues+TRjnbSQXQLpY+jors0CgYEAxWpT
+4rSSjEYffLrjtTIvGSQpezTO2cMXOIQMveKsJYv/qMwgAb398OGfs4i3Q+QOOzaJ
+Fo9ok4hq9Ho3d8Xh4z0IjkY43+87hXcR9yJWqAivuAkvuy67oh3x69toY6z2mubd
+J1cojkEf6gNOdSdJk23dN4bP2uF2VjxZd2Hk6OkCgYAYAsWy49u7V5wU4cKgasjM
+vZjGII/TD7zvgeexbzXveVvBSTXQPAj0dHz8wEYRMXXrKwrgiEHzM8ffpITDuZ4S
+jrJo0pozen0184l1cbjZH0zeeQeWKAIC5nWQslJ7VyxtNTur7tIWoHdGlYKKQSi6
+bCXk8quzhtOCfyE+CAJLWQKBgQCVJ9zxcNU4vtKTfvEEukHzkOr2d9PBnDEzNjIa
+VeUTCU/EzVVxe4ceNJphH264ENrfyjiRnxC4R13oEV9PU2d0NWz9cfkO2MXz9R7R
+xlQK6WU6e1Zg6tJBjrZ2KXQZu1kneD6ntqahtHrUaGMjCOgCSAPYLDdnfOnYBgji
+tkgp4QKBgBco9zj0n3tzsNSI3zhQ73ijT62vk217zrqongiebnKqhov24X9s7Bbq
+bfa3hdnuQiWClrvgKFQKdSnWCyb2sY24mqDJHlu9MCMRhub8AvFFzx3eXmjLUPU/
+2wbdsd3mFzY97/HVVTEumVQ5Batv3RnK1Kz/AsVngJV18VeDlCi7
+-----END RSA PRIVATE KEY-----"
 
 });
 return "ORG1 Privatechannel1"

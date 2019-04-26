@@ -59,7 +59,7 @@ function CreateDbForCompany(company,publickey,privatekey){
       dbo.createCollection('CompanyData', function(err, res) { //create collection 
         if (err) throw err;
         var myobj = [
-          { _id: publickey,privatekey: privatekey }
+          { _id: publickey,value: privatekey }
         ];
         dbo.collection('CompanyData').insertMany(myobj, function(err, res) { //insertMany
           if (err) throw err;
