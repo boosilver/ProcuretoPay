@@ -65,7 +65,11 @@ function CreateDbForCompany(company,publickey,privatekey){
           if (err) throw err;
          
         db.close();
+<<<<<<< HEAD
       });
+=======
+      }); 
+>>>>>>> 18a5ebbab6dc294cbd762082b62c16be8f7c1e3e
     });
     })       
   return ;

@@ -138,6 +138,48 @@ new toBC(bcuserName).CheckInvoice(req.body).then((result) => {
 })
   
 }); 
+app.post('/Checkkey', function (req, res, next) {
+  let functionName = '[API: POST /api/v1/Checkkey]';
+
+  getUser(req.body).then((getkey) => {
+    const bcuserName = `${getkey}`
+new toBC(bcuserName).Checkkey(req.body).then((result) => {
+    res.status(201);
+    res.json(result.message);
+  })
+  .catch((error) => {
+    logger.error(`${functionName} Failed to check new Service Request: ${error}`);
+    res.status(500);
+    res.json({
+      code: 500,
+      message: `Failed to check new Service Request: ${error}`
+    });
+  });
+})
+  
+}); 
+//#############################################################################
+//############################### BANK #######################################
+//#############################################################################
+app.post('/BorrowInvoice', function (req, res, next) {
+  let functionName = '[API: POST /api/v1/BorrowInvoice]';
+  getFORM(req.body).then((getkey) => {
+    const bcuserName = `${getkey}`
+new toBC(bcuserName).BorrowInvoice(req.body).then((result) => {
+    res.status(201);
+    res.json(result.message);
+  })
+  .catch((error) => {
+    logger.error(`${functionName} Failed to transfer new Service Request: ${error}`);
+    res.status(500);
+    res.json({
+      code: 500,
+      message: `Failed to transfer new Service Request: ${error}`
+    });
+  });
+})
+  
+});
 
 //#############################################################################
 //############################### ADMIN #######################################
