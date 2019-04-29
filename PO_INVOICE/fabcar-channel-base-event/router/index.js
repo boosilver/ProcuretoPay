@@ -47,6 +47,28 @@ function getFORM(key) { // for transfer
 
   });
 }
+function getBANK(key) { // for transfer 
+  let functionName = '[toBC.getFORM(unparsedAttrs)]';
+
+  return new Promise((resolve, reject) => {
+      
+      let getuser = {};
+      //new kvs().putStore(inv_identity,unparsedAttrs)
+      
+      try {
+        getuser = {
+              BANK: key.BANK || '',
+          }
+          resolve([
+            getuser.BANK.toString().toLowerCase(),
+          ])
+      } catch (e) {
+          logger.error(`${functionName} Parsing attributes failed ${e}`);
+          reject(`Sorry could not parse attributes: ${e}`);
+      }
+
+  });
+}
 app.post('/Genkey', function (req, res, next) {
   let functionName = '[API: POST /api/v1/Genkey]';
   getFORM(req.body).then((getkey) => {
@@ -166,6 +188,26 @@ app.post('/BorrowInvoice', function (req, res, next) {
   getFORM(req.body).then((getkey) => {
     const bcuserName = `${getkey}`
 new toBC(bcuserName).BorrowInvoice(req.body).then((result) => {
+    res.status(201);
+    res.json(result.message);
+  })
+  .catch((error) => {
+    logger.error(`${functionName} Failed to transfer new Service Request: ${error}`);
+    res.status(500);
+    res.json({
+      code: 500,
+      message: `Failed to transfer new Service Request: ${error}`
+    });
+  });
+})
+  
+});
+
+app.post('/Request_Verify_Invoice', function (req, res, next) {
+  let functionName = '[API: POST /api/v1/Request_Verify_Invoice]';
+  getBANK(req.body).then((getkey) => {
+    const bcuserName = `${getkey}`
+new toBC(bcuserName).Request_Verify_Invoice(req.body).then((result) => {
     res.status(201);
     res.json(result.message);
   })
