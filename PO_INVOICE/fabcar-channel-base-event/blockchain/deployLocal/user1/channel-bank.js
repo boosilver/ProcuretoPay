@@ -65,7 +65,7 @@ return 1
         ///localhost org1 peer0 
         ChannelEventArray.push(channel.newChannelEventHub("localhost:7051"))
         })
-        console.log('THEMALL');
+        console.log('bank');
     ChannelEventArray.forEach(ChannelEvent => {
        var ChainCodeEvent = ChannelEvent.registerChaincodeEvent(chaincodeid, chaincodeEventName,
         async(event, block_num, txnid, status) => {
@@ -75,14 +75,14 @@ return 1
             // let StringUnicod = bufferOriginal.toString('utf8')
             // var  money =parseInt(StringUnicod, 10);
             var results = JSON.parse(event.payload.toString('utf8'))
+            
             // console.log(results)
             // console.log("KEY : "+results.KEY)
             // console.log("VALUE : "+results.VALUE+"\n   in block number : "+block_num)
             const key = new NodeRSA();
+            // console.log(event.payload.toString('utf8'))
             const ciphertext = results.VALUE
-            var keyprivate = await db.DBread("themall", "CompanyData", "themall")  
-            // var pemFile = path.resolve(__dirname,`../../../controller/LOTUS/private_key.pem`)
-            // var keyprivate =fs.readFileSync(pemFile)
+            var keyprivate = await db.DBread("bank", "CompanyData", "bank")  
             key.importKey(keyprivate,'pkcs1-private-pem');
 
             
@@ -91,37 +91,33 @@ return 1
                 // var TO = JSON.parse(decrypted.TO)
                 // console.log(TO)
                 // console.log('decrypted: ', decrypted);
+
+
                 var INFORMATION = JSON.parse(decrypted)
-                console.log('decrypted: ', JSON.parse(decrypted));
-                console.log("---------------------------------")
+                console.log('decrypted: ', JSON.parse(decrypted)); 
+                console.log("---------------------------------") 
+                var INVOICE = JSON.parse(decrypted) //ค่าใบขอกู้ทั้งหมด
+                // console.log(INVOICE.INVOICE) /// ค่าใบอินวอย
+                var publckey = await db.DBreadPublic("bank","CompanyData" , "bank")
+                key.importKey(publckey, 'pkcs1-public-pem');
+                const ciphertext2 = key.encrypt(INVOICE.INVOICE, 'base64', 'utf8');
+                // console.log(ciphertext2)
+               
                 var checkhash = "0"
                 var checkID = "0"
+                var checkinvoice = "0"
                 try {
-                    checkhash = await db.DBread(INFORMATION.TO,INFORMATION.TYPE , results.KEY)
-                    checkID = await db.DBread(INFORMATION.TO,INFORMATION.TYPE , INFORMATION.KEY)  
+                    checkhash = await db.DBread(INFORMATION.BANK,INFORMATION.TYPE , results.KEY)
+                    checkID = await db.DBread(INFORMATION.BANK,INFORMATION.TYPE , INFORMATION.BORROWKEY)  
+                    checkinvoice = await db.DBread(INFORMATION.BANK,INVOICE.INVOICE.TYPE , INVOICE.INVOICE.KEY)  
                 } catch (error) {
                     // console.log(error)
                 }
-                //////////
-                if(INFORMATION.VERIFY == "Verify"){
-                    var Verifyhash = await db.DBread("themall",INFORMATION.TYPE , INFORMATION.KEY)
-                    var Verifycrypt = await db.DBread("themall",INFORMATION.TYPE , Verifyhash)
-                    // var keyprivate = await db.DBread("lotus", "CompanyData", "lotus")
-                    key.importKey(keyprivate,'pkcs1-private-pem');
-                    var decryptedlocal = key.decrypt(Verifycrypt, 'utf8');
-                    var Infodecryp = JSON.parse(decryptedlocal)
-                    console.log(decryptedlocal)
-                    console.log(Infodecryp.TO)
-                    if(INFORMATION.TO == Infodecryp.TO && INFORMATION.FORM == Infodecryp.FORM &&INFORMATION.TYPE == Infodecryp.TYPE
-                        && INFORMATION.KEY == Infodecryp.KEY && INFORMATION.VALUE == Infodecryp.VALUE && INFORMATION.DATE ==Infodecryp.DATE
-                        && INFORMATION.SALT ==Infodecryp.SALT){
-                        console.log("kuy")
-
-                        /// ลงบล็อค
-                    }
-                }else if ((checkhash && checkID) == "0"){
-                    db.DBwrite(INFORMATION.TO,INFORMATION.TYPE , results.KEY, results.VALUE)
-                    db.DBwrite(INFORMATION.TO,INFORMATION.TYPE , INFORMATION.KEY, results.KEY)
+                if ((checkhash && checkID ) == "0"){
+                    // console.log("00000000000")
+                    db.DBwrite(INFORMATION.BANK,INFORMATION.TYPE , results.KEY, results.VALUE) //เก็บแฮด คู่ เอ็นคลิบ
+                    db.DBwrite(INFORMATION.BANK,INFORMATION.TYPE , INFORMATION.BORROWKEY, results.KEY) // เก็บไอดี คู่แฮด
+                    db.DBwrite(INFORMATION.BANK,INVOICE.INVOICE.TYPE , INVOICE.INVOICE.KEY, ciphertext2) // เก็บข้อมูลใบอินวอย
                 }
                 if (decrypted == all) {
                     console.log('--------- correct salt -----------')

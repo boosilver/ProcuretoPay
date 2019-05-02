@@ -18,8 +18,8 @@ type USER_INFORMATION struct {
 	SHOW_HISTORY []string
 }
 type PO_INFORMATION struct {
-	VALUE string `json:"PO_ID"`
-	KEY   string `json:"FORM"`
+	VALUE string `json:"VALUE"`  ///json คือคีย์ที่ใช้เวลาส่งไปที่อื่นต่อ
+	KEY   string `json:"KEY"`
 }
 type INVOICE_INFORMATION struct {
 	KEY   string `json:"KEY"`

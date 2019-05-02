@@ -169,7 +169,7 @@ class toBC {
             console.log('HASH Ciphertext Complete!!! : ', hash)
             let args = [hash, ciphertext
             ];
-            blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, args, INVOKE_ATTRIBUTES).then((result) => {
+            blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, args, INVOKE_ATTRIBUTES).then(async(result) => {
                 let resultParsed = result.result.toString('utf8');
                 // var resultParsed = Buffer.from(JSON.stringify(result.result)); 
                 // var resultParsed2 = JSON.parse(resultParsed.toJSON()).data
@@ -178,11 +178,18 @@ class toBC {
                 console.log("++-+--+-+-+-+--+-+-+-+-+-+--+-+-+-")
                 console.log(ciphertext);
                 var collections = "PO"
-                db.DBwrite(unparsedAttrs.FORM, collections, hash, ciphertext)
-                db.DBwrite(unparsedAttrs.FORM, collections, unparsedAttrs.KEY, hash)
+                console.log(unparsedAttrs.FORM);
+                var My_publckey = await db.DBreadPublic(unparsedAttrs.FORM,"CompanyData" , unparsedAttrs.FORM)
+                key.importKey(My_publckey, 'pkcs1-public-pem');
+                const MY_ciphertext = key.encrypt(parsedAttrs, 'base64', 'utf8');
+                var My_hash = crypto.createHash('sha256')          //HASH FUCTION
+                .update(MY_ciphertext)
+                .digest('hex');
+                db.DBwrite(unparsedAttrs.FORM, collections, My_hash, MY_ciphertext)
+                db.DBwrite(unparsedAttrs.FORM, collections, unparsedAttrs.KEY, My_hash)
                 ////////////
-                db.DBwrite(unparsedAttrs.TO, collections, hash, ciphertext)        /// ให้แก้ไปเก็บลงในต้าเบสของคนที่เราจะส่งให้
-                db.DBwrite(unparsedAttrs.TO, collections, unparsedAttrs.KEY, hash) /// ทาง event hub
+                // db.DBwrite(unparsedAttrs.TO, collections, hash, ciphertext)        /// ให้แก้ไปเก็บลงในต้าเบสของคนที่เราจะส่งให้
+                // db.DBwrite(unparsedAttrs.TO, collections, unparsedAttrs.KEY, hash) /// ทาง event hub
 
                 // MongoClient.connect(url, function (err, db) { //connect DB url
                 //     if (err) throw err;
@@ -230,11 +237,13 @@ class toBC {
             let companydata = {};
             var DATE = day.getDate() + "-" + (day.getMonth() + 1) + "-" + day.getFullYear();
             var SALT = getRandomInt();
+            var TYPE = unparsedAttrs.TYPE.toUpperCase()
             var parsedAttrs = {
                 TO: unparsedAttrs.TO || '',
                 FORM: unparsedAttrs.FORM || '',
-                TYPE: unparsedAttrs.TYPE || '',
+                TYPE: TYPE,
                 KEY: unparsedAttrs.KEY || '',
+                POKEY: unparsedAttrs.POKEY || '',
                 VALUE: unparsedAttrs.VALUE || '',
                 DATE: DATE,
                 SALT: SALT,
@@ -263,17 +272,23 @@ class toBC {
             console.log('HASH Ciphertext Complete!!! : ', hash)
             let args = [hash, ciphertext
             ];
-            blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, args, INVOKE_ATTRIBUTES).then((result) => {
+            blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, args, INVOKE_ATTRIBUTES).then(async(result) => {
                 let resultParsed = result.result.toString('utf8');
                 console.log("++-+--+-+-+-+--+-+-+-+-+-+--+-+-+-")
                 console.log(resultParsed)
                 console.log(ciphertext);
                 var collections = "INVOICE"
-                db.DBwrite(unparsedAttrs.FORM, collections, hash, ciphertext)
-                db.DBwrite(unparsedAttrs.FORM, collections, unparsedAttrs.KEY, hash)
+                var My_publckey = await db.DBreadPublic(unparsedAttrs.FORM,"CompanyData" , unparsedAttrs.FORM)
+                key.importKey(My_publckey, 'pkcs1-public-pem');
+                const MY_ciphertext = key.encrypt(parsedAttrs, 'base64', 'utf8');
+                var My_hash = crypto.createHash('sha256')          //HASH FUCTION
+                .update(MY_ciphertext)
+                .digest('hex');
+                db.DBwrite(unparsedAttrs.FORM, collections, My_hash, MY_ciphertext)
+                db.DBwrite(unparsedAttrs.FORM, collections, unparsedAttrs.KEY, My_hash)
                 ////////////
-                db.DBwrite(unparsedAttrs.TO, collections, hash, ciphertext)        /// ให้แก้ไปเก็บลงในต้าเบสของคนที่เราจะส่งให้
-                db.DBwrite(unparsedAttrs.TO, collections, unparsedAttrs.KEY, hash) /// ทาง event hub
+                // db.DBwrite(unparsedAttrs.TO, collections, hash, ciphertext)        /// ให้แก้ไปเก็บลงในต้าเบสของคนที่เราจะส่งให้
+                // db.DBwrite(unparsedAttrs.TO, collections, unparsedAttrs.KEY, hash) /// ทาง event hub
 
                 resolve({
                     message: {
@@ -296,6 +311,7 @@ class toBC {
         let self = this;
         let functionName = '[toBC.BorrowInvoice(unparsedAttrs)]';
         return new Promise(async (resolve, reject) => {
+            
             let invokeObject = {};
             let getkey = {};
             let companydata = [];
@@ -323,10 +339,12 @@ class toBC {
             var parsedAttrs = {
                 BANK: unparsedAttrs.BANK || reject("Company name not found"),
                 FORM: unparsedAttrs.FORM || reject("FORM name not found"), //ไปอ่านไฟล์คอนฟิกของบริษัทเราเอง 
-                TYPE: "BorrowInvoice", // API เจนเอง
+                TYPE: "BORROW_INVOICE", // API เจนเอง
                 BORROWKEY: unparsedAttrs.BORROWKEY || reject("BORROWKEY name not found"),
+                PO_ID: decrypted.POKEY,
                 INVOICE_ID: unparsedAttrs.INVOICE_ID || reject("KEY name not found"),
                 DATE: DATE,
+                INVOICE: decrypted,
             }
             // var COMPANY = unparsedAttrs.COMPANY // อันเดียวกีับ to แก้ให้เป็นอันเดียวกัน
             invokeObject = {
@@ -366,25 +384,25 @@ class toBC {
                 db.DBwrite(unparsedAttrs.FORM, collections, hash, ciphertext)
                 db.DBwrite(unparsedAttrs.FORM, collections, unparsedAttrs.BORROWKEY, hash)
                 ////////////
-                db.DBwrite(unparsedAttrs.BANK, collections, hash, ciphertext)        /// ให้แก้ไปเก็บลงในต้าเบสของคนที่เราจะส่งให้
-                db.DBwrite(unparsedAttrs.BANK, collections, unparsedAttrs.BORROWKEY, hash) /// ทาง event hub
+                // db.DBwrite(unparsedAttrs.BANK, collections, hash, ciphertext)        /// ให้แก้ไปเก็บลงในต้าเบสของคนที่เราจะส่งให้
+                // db.DBwrite(unparsedAttrs.BANK, collections, unparsedAttrs.BORROWKEY, hash) /// ทาง event hub
 
-                getkey = {
-                    enrollID:"bank",
-                    fcnname: CheckUser,
+                // getkey = {
+                //     enrollID:"bank",
+                //     fcnname: CheckUser,
     
-                };
-                companydata = ["bank",
-                "bank",
-                ]
+                // };
+                // companydata = ["bank",
+                // "bank",
+                // ]
                 
-                var Publickey = await Get_Key(getkey, companydata)
-                key.importKey(Publickey.toString(), 'pkcs1-public-pem');
-                const ciphertext2 = key.encrypt(decrypted, 'base64', 'utf8');
-                console.log("---------------------------------------------")
-                // console.log(parsedAttrs)
-                // console.log("EN"+ciphertext2)
-                db.DBwrite(unparsedAttrs.BANK, collectionsInvoice, decrypted.KEY, ciphertext2)
+                // var Publickey = await Get_Key(getkey, companydata)
+                // key.importKey(Publickey.toString(), 'pkcs1-public-pem');
+                // const ciphertext2 = key.encrypt(decrypted, 'base64', 'utf8');
+                // console.log("---------------------------------------------")
+                // // console.log(parsedAttrs)
+                // // console.log("EN"+ciphertext2)
+                // db.DBwrite(unparsedAttrs.BANK, collectionsInvoice, decrypted.KEY, ciphertext2)
                 ////////////////////////
                 resolve({
                     message: {
@@ -392,6 +410,7 @@ class toBC {
                         FORM: parsedAttrs.FORM,
                         TYPE: parsedAttrs.TYPE,
                         INVOICE_ID: parsedAttrs.INVOICE_ID,
+                        PO_ID: decrypted.POKEY,
                         VALUE: parsedAttrs.VALUE,
                         DATE: parsedAttrs.DATE,
                         INVOICE: decrypted,
@@ -416,7 +435,9 @@ class toBC {
             var DATE = day.getDate() + "-" + (day.getMonth() + 1) + "-" + day.getFullYear();
             var SALT = getRandomInt();
             var collections = "BORROW_INVOICE"
+            console.log("testttttttttttttttttttt");
             var hash = await db.DBread(unparsedAttrs.BANK, collections, unparsedAttrs.BORROWKEY)
+            console.log("testttttttttttttttttttt");
             var encrypt = await db.DBread(unparsedAttrs.BANK, collections, hash)
             ///////////
             // let invokekey = {
@@ -441,10 +462,12 @@ class toBC {
             console.log('INVOICE: ', decryptedInvoice);
             ///////////////
             var parsedAttrs = {
+                VERIFY: "Verify",
                 TO: decryptedInvoice.TO,
                 FORM: decryptedInvoice.FORM,
                 TYPE: decryptedInvoice.TYPE, 
                 KEY: decryptedInvoice.KEY,
+                POKEY: decryptedInvoice.POKEY,
                 VALUE: decryptedInvoice.VALUE,
                 DATE: decryptedInvoice.DATE,
                 SALT: decryptedInvoice.SALT,  /// ของตริงใช้ SALT ใหม่ที่เจนใหม่
@@ -463,7 +486,7 @@ class toBC {
                 fcnname: CheckUser,
 
             };
-            companydata = [unparsedAttrs.BANK,
+            companydata = [unparsedAttrs.TO,
             unparsedAttrs.BANK,
             ]
             console.log("------------------xxxxxxxxxxxxxxxxx---------------------------")
@@ -500,6 +523,7 @@ class toBC {
                         FORM: parsedAttrs.FORM,
                         TYPE: parsedAttrs.TYPE,
                         KEY: parsedAttrs.KEY,
+                        POKEY: decryptedInvoice.POKEY,
                         VALUE: parsedAttrs.VALUE,
                         DATE: parsedAttrs.DATE,
                         SALT: parsedAttrs.SALT,
