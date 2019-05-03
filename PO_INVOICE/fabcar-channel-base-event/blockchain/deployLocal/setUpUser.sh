@@ -12,6 +12,11 @@ node registerUser.js
 node registerUser2.js
 node registerUser3.js
 node registerUser4.js
+node registerUser5.js
+node registerUser6.js
+node registerUser7.js
+node registerUser8.js
+
 
 cd ..
 

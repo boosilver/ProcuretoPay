@@ -1,6 +1,3 @@
-const db = require('../../../utils/utilsdb')
-const onewayfunction = require('../../../utils/hash')
-
 
 'use strict';
 
@@ -19,6 +16,7 @@ var peer = fabric_client.newPeer('grpc://localhost:7051');
 var order = fabric_client.newOrderer('grpc://localhost:7050')
 const NodeRSA = require('node-rsa');
 const fs = require("fs")
+const db = require('../../../utils/utilsdb')
 // setup the fabric network
 // var channel = fabric_client.newChannel('privatechannel1');
 //  var channel2 = fabric_client.newChannel('privatechannel2');
@@ -30,11 +28,6 @@ var member_user = null;
 var store_path = path.join(__dirname, 'hfc-key-store');
 console.log('Store path:'+store_path);
 var tx_id = null;
-
-var privatekey = ""
-var companyname = "peet"
-var collections = "CompanyData"
-getprivate()
 
 // create the key value store as defined in the fabric-client/config/default.json 'key-value-store' setting
 Fabric_Client.newDefaultKeyValueStore({ path: store_path
@@ -72,35 +65,47 @@ return 1
         ///localhost org1 peer0 
         ChannelEventArray.push(channel.newChannelEventHub("localhost:7051"))
         })
+        console.log('THEMALL');
     ChannelEventArray.forEach(ChannelEvent => {
        var ChainCodeEvent = ChannelEvent.registerChaincodeEvent(chaincodeid, chaincodeEventName,
-        (event, block_num, txnid, status) => {
+        async(event, block_num, txnid, status) => {
            // console.log(event)
             // console.log(ChannelEvent.lastBlockNumber())
             // let bufferOriginal = Buffer.from(JSON.parse(JSON.stringify(event.payload)).data); 
             // let StringUnicod = bufferOriginal.toString('utf8')
             // var  money =parseInt(StringUnicod, 10);
             var results = JSON.parse(event.payload.toString('utf8'))
-            console.log("---------------------------------------")
+            // console.log(results)
             // console.log("KEY : "+results.KEY)
             // console.log("VALUE : "+results.VALUE+"\n   in block number : "+block_num)
-            
-            //decrypt
             const key = new NodeRSA();
-            var identity = onewayfunction.hash(results)
+            const ciphertext = results.VALUE
+            var keyprivate = await db.DBread("themall", "CompanyData", "themall")  
             // var pemFile = path.resolve(__dirname,`../../../controller/LOTUS/private_key.pem`)
             // var keyprivate =fs.readFileSync(pemFile)
-            key.importKey(privatekey,'pkcs1-private-pem');
+            key.importKey(keyprivate,'pkcs1-private-pem');
+
             
             try {
-                const decrypted = key.decrypt(results.VALUE, 'utf8');
-                var salt = decrypted.salt
-                var id = decrypted.id
-                var hash = identity
-                
-                console.log(salt,id,hash,'+++++++++++++++++++++++++++++++')
-                
-                console.log('decrypted: ', decrypted);
+                const decrypted = key.decrypt(ciphertext, 'utf8');
+                // var TO = JSON.parse(decrypted.TO)
+                // console.log(TO)
+                // console.log('decrypted: ', decrypted);
+                var INFORMATION = JSON.parse(decrypted)
+                console.log('decrypted: ', JSON.parse(decrypted));
+                console.log("---------------------------------")
+                var checkhash = "0"
+                var checkID = "0"
+                try {
+                    checkhash = await db.DBread(INFORMATION.TO,INFORMATION.TYPE , results.KEY)
+                    checkID = await db.DBread(INFORMATION.TO,INFORMATION.TYPE , INFORMATION.KEY)  
+                } catch (error) {
+                    // console.log(error)
+                }
+                if ((checkhash && checkID) == "0"){
+                    db.DBwrite(INFORMATION.TO,INFORMATION.TYPE , results.KEY, results.VALUE)
+                    db.DBwrite(INFORMATION.TO,INFORMATION.TYPE , INFORMATION.KEY, results.KEY)
+                }
                 if (decrypted == all) {
                     console.log('--------- correct salt -----------')
                 }
@@ -119,33 +124,6 @@ return 1
     ChannelEvent.connect(true)
 });
 
-// var privatekey = "-----BEGIN RSA PRIVATE KEY-----
-// MIIEowIBAAKCAQEAmczrQpS+iv0bo9lN3nW1UnlLFxK0/trrDPiPPmZBV7KSZ7cm
-// M1lfNqwq/r513p21lqBBEW+XNfsrLHRzgSF7DK7aG3G5PCgcBL2SKYY0tGavTiyO
-// IF0NIYyt+eKBXM4bU5DPeSP3FY338XRWyQGgnikc9Meo++qjmUBYvRCOw+ZhVus/
-// XTzpAahuv0/uJFagEgg9z+UwXOqq1qnxSPA+Ao+6GQBWiO9EKNyUpLyaRGffUK19
-// f6im4g5tZcEpbm1A222wmN9gAKtdQPBrWofU9CPEwtCdkpB7NNy7iIauWSK+Nsnx
-// wF79j01wrgSOPRsxbAsU6ReY1uACXxbENcTglQIDAQABAoIBAHYrXm8vvh8oTf5c
-// TloocoLFsw4tT2epaIP0zoqRIo9xItARhoZZmrB1JCvKxuGepxDuXFA7PyE4tHlZ
-// mA2VXefmyKnhfQNdhfmWdiD1frVFWFhmH2V6WUZ3woyGngJiUdipIN/g5E1pYSHh
-// 03RpjbE3wYnJhmrYY46yQ/wwJqEYxrF3IGJaM03AoCw2W2o970yx0ck5piNn2pmt
-// wykj1tV8WM8zh4telHAr+ppnSUvLGIC5GncAkLQdUBAGEMqkhaZz1fdWva0+wkLp
-// pHRnLoWvh1eOkuvE4ckI6eFBqtXZiJi6AZ+7bOZDHIEDfLAwj6Cos6kW6DkrPoIj
-// 3Yf7K8ECgYEAx3Eppl6Rdmgywv8CuzHxDzKZp+ttdgZb/iU445tESfRLXF9+ALV6
-// NUIsCYPjPEUEPQeopCY8uL1TXivhYPYhOwMU0Ji5h5UUdJIeRYm1/D22VwRqIyiQ
-// J7q1zP2zvZqhdt8gzvUZSkE2rGEdhLHmzues+TRjnbSQXQLpY+jors0CgYEAxWpT
-// 4rSSjEYffLrjtTIvGSQpezTO2cMXOIQMveKsJYv/qMwgAb398OGfs4i3Q+QOOzaJ
-// Fo9ok4hq9Ho3d8Xh4z0IjkY43+87hXcR9yJWqAivuAkvuy67oh3x69toY6z2mubd
-// J1cojkEf6gNOdSdJk23dN4bP2uF2VjxZd2Hk6OkCgYAYAsWy49u7V5wU4cKgasjM
-// vZjGII/TD7zvgeexbzXveVvBSTXQPAj0dHz8wEYRMXXrKwrgiEHzM8ffpITDuZ4S
-// jrJo0pozen0184l1cbjZH0zeeQeWKAIC5nWQslJ7VyxtNTur7tIWoHdGlYKKQSi6
-// bCXk8quzhtOCfyE+CAJLWQKBgQCVJ9zxcNU4vtKTfvEEukHzkOr2d9PBnDEzNjIa
-// VeUTCU/EzVVxe4ceNJphH264ENrfyjiRnxC4R13oEV9PU2d0NWz9cfkO2MXz9R7R
-// xlQK6WU6e1Zg6tJBjrZ2KXQZu1kneD6ntqahtHrUaGMjCOgCSAPYLDdnfOnYBgji
-// tkgp4QKBgBco9zj0n3tzsNSI3zhQ73ijT62vk217zrqongiebnKqhov24X9s7Bbq
-// bfa3hdnuQiWClrvgKFQKdSnWCyb2sY24mqDJHlu9MCMRhub8AvFFzx3eXmjLUPU/
-// 2wbdsd3mFzY97/HVVTEumVQ5Batv3RnK1Kz/AsVngJV18VeDlCi7
-// -----END RSA PRIVATE KEY-----"
 
 });
 return "ORG1 Privatechannel1"
@@ -155,8 +133,3 @@ return "ORG1 Privatechannel1"
 }).catch((err) => {
 	console.error('Failed to invoke successfully :: ' + err);
 });
-
-async function getprivate(){
-    privatekey = await db.DBread(companyname,collections,companyname)
-    
-}
