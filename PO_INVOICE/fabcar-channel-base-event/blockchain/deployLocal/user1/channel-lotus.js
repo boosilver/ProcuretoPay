@@ -17,6 +17,10 @@ var order = fabric_client.newOrderer('grpc://localhost:7050')
 const NodeRSA = require('node-rsa');
 const fs = require("fs")
 const db = require('../../../utils/utilsdb')
+const CheckUser = 'CheckUser';
+// const blockchain = require('../blockchain/service');
+// const blockchain = require('../../service')
+const INVOKE_ATTRIBUTES = ['devorgId']; 
 // setup the fabric network
 // var channel = fabric_client.newChannel('privatechannel1');
 //  var channel2 = fabric_client.newChannel('privatechannel2');
@@ -28,6 +32,19 @@ var member_user = null;
 var store_path = path.join(__dirname, 'hfc-key-store');
 console.log('Store path:' + store_path);
 var tx_id = null;
+
+async function Get_Key(getkey, company) {
+    console.log(getkey)
+    console.log(company)
+    console.log("++-+--+-+-+Getkey-+-+-+-+--+-+-+-")
+    var result = await blockchain.query(getkey.enrollID, getkey.fcnname, company, INVOKE_ATTRIBUTES)
+    // blockchain.query(getkey.enrollID, getkey.fcnname, company, INVOKE_ATTRIBUTES).then((result) => {
+    let resultParsed = JSON.parse(result.result.toString('utf8'));
+    console.log(resultParsed.PUBLIC_KEY)
+    console.log("++-+--+-+-+Affter Getkey-+-+-+-+--+-+-+-")
+    return (resultParsed.PUBLIC_KEY);
+}
+
 
 // create the key value store as defined in the fabric-client/config/default.json 'key-value-store' setting
 Fabric_Client.newDefaultKeyValueStore({
@@ -54,6 +71,7 @@ Fabric_Client.newDefaultKeyValueStore({
 
     return 1
 }).then((results) => {
+
     fabric_client.queryChannels(peer).then((name) => {
         //console.log(name.channels[0].channel_id)
         name.channels.forEach(channelName => {
@@ -76,7 +94,7 @@ Fabric_Client.newDefaultKeyValueStore({
                     // let StringUnicod = bufferOriginal.toString('utf8')
                     // var  money =parseInt(StringUnicod, 10);
                     var results = JSON.parse(event.payload.toString('utf8'))
-                    // console.log(results)
+                    // console.log("lllll"+results)
                     // console.log("KEY : "+results.KEY)
                     // console.log("VALUE : "+results.VALUE+"\n   in block number : "+block_num)
                     const key = new NodeRSA();
@@ -86,19 +104,20 @@ Fabric_Client.newDefaultKeyValueStore({
                     // var keyprivate =fs.readFileSync(pemFile)
                     key.importKey(keyprivate, 'pkcs1-private-pem');
 
-
                     try {
                         var decrypted = key.decrypt(ciphertext, 'utf8');
                         // var TO = JSON.parse(decrypted.TO)
                         // console.log(TO)
                         // console.log('decrypted: ', decrypted);
                         var INFORMATION = JSON.parse(decrypted)
-                        console.log('decrypted: ', JSON.parse(decrypted));
-                        console.log("---------------------------------")
+                        console.log('decrypted: ', INFORMATION);
+                        // console.log('decrypted bank: ', INFORMATION.BANK);
+                        console.log(`-------------- End ${INFORMATION.TYPE}------------------`)
                         var checkhash = "0"
                         var checkID = "0"
                         try {
-                            checkhash = await db.DBread(INFORMATION.TO, INFORMATION.TYPE, results.KEY)
+                            // console.log(INFORMATION.TO)
+                            checkhash = await db.DBread(INFORMATION.TO, INFORMATION.TYPE, results.KEY)  /// จะทำเฉพาะตอนที่ไม่ใช่ verify 
                             checkID = await db.DBread(INFORMATION.TO, INFORMATION.TYPE, INFORMATION.KEY)
                         } catch (error) {
                             // console.log(error)
@@ -107,7 +126,7 @@ Fabric_Client.newDefaultKeyValueStore({
                         if (INFORMATION.VERIFY == "Verify") {
                             var Verifyhash = await db.DBread("lotus", INFORMATION.TYPE, INFORMATION.KEY)
                             var Verifycrypt = await db.DBread("lotus", INFORMATION.TYPE, Verifyhash)
-                            console.log(Verifyhash)
+                            // console.log(Verifyhash)
                             // var keyprivate = await db.DBread("lotus", "CompanyData", "lotus")
                             key.importKey(keyprivate, 'pkcs1-private-pem');
                             var decryptedlocal = key.decrypt(Verifycrypt, 'utf8'); /// invoice
@@ -116,23 +135,33 @@ Fabric_Client.newDefaultKeyValueStore({
 
                             if (INFORMATION.TO == Infodecryp.TO && INFORMATION.FORM == Infodecryp.FORM && INFORMATION.TYPE == Infodecryp.TYPE
                                 && INFORMATION.KEY == Infodecryp.KEY &&INFORMATION.POKEY == Infodecryp.POKEY && INFORMATION.VALUE == Infodecryp.VALUE && INFORMATION.DATE == Infodecryp.DATE
-                                && INFORMATION.SALT == Infodecryp.SALT) {
-                                console.log("kuy")
+                                && INFORMATION.SALT == Infodecryp.SALT) { //// เช็คว่าที่ส่งมาตรงกับในดาต้าเบสไหม
+                                // console.log("kuy")
                                 var INFO
                                 if (INFORMATION.TYPE == "INVOICE") {
                                     INFO = "PO"
                                 } else INFO = "INVOICE"
-                                var hash_PO = await db.DBread("lotus", INFO, "300") ///ด้านหลังต้องใช้เลขใบ PO
+                                var hash_PO = await db.DBread("lotus", INFO, Infodecryp.POKEY) ///ด้านหลังต้องใช้เลขใบ PO
                                 var crypt_PO = await db.DBread("lotus", INFO, hash_PO)
                                 decryptedlocal = key.decrypt(crypt_PO, 'utf8'); /// PO
-                                console.log(decryptedlocal) // po
+                                // console.log("PO_INFO : "+decryptedlocal) // po
 
 
+                                // var getkey = {
+                                //     enrollID: "lotus",
+                                //     fcnname: CheckUser,
+                    
+                                // };
+                                // var companydata = [INFORMATION.BANK,
+                                //     "lotus",
+                                // ]
+                                // // toBC.CreatePO(getkey)
+                                // var Publickey = await Get_Key(getkey, companydata)
+                                // console.log("kuy = "+Publickey)
                                 /// ลงบล็อค invoke
                             }
                         } else
                             if ((checkhash && checkID) == "0") {
-                                console.log("555")
                                 db.DBwrite(INFORMATION.TO, INFORMATION.TYPE, results.KEY, results.VALUE)
                                 db.DBwrite(INFORMATION.TO, INFORMATION.TYPE, INFORMATION.KEY, results.KEY)
                             }

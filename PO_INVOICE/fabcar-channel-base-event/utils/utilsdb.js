@@ -34,16 +34,29 @@ var data ;
 
   return data;
 }
-function AdminDBwrite(company,publickey,privatekey){
+async function DBreadPublic(company,collections,key){
+  var data ;
+   db = await MongoClient.connect(url) 
+   if (!db) console.log ('error to connect database server ')
+      var dbo = db.db(company);
+      result = await dbo.collection(collections).findOne({_id: key})
+      if (!result) console.log ('data not found ')
+           //console.log(result.name);
+            data = result.publickey
+            db.close();
+  
+    return data;
+  }
+function AdminDBwrite(NameCompany,publickey,privatekey){
   MongoClient.connect(url, function(err, db) { //connect DB url
       if (err) throw err;
-      var dbo = db.db("KeyCompany");
-      dbo.createCollection('CompanyName', function(err, res) { //create collection 
+      var dbo = db.db('ForAdmin');
+      dbo.createCollection('Company', function(err, res) { //create collection 
         if (err) throw err;
         var myobj = [
-          { _id: company, publickey: publickey ,privatekey: privatekey }
+          { _id: NameCompany,publickey: publickey ,value: privatekey }
         ];
-        dbo.collection('CompanyName').insertMany(myobj, function(err, res) { //insertMany
+        dbo.collection('Company').insertMany(myobj, function(err, res) { //insertMany
           if (err) throw err;
          
         db.close();
@@ -52,28 +65,49 @@ function AdminDBwrite(company,publickey,privatekey){
     })       
   return ;
 }
-function CreateDbForCompany(company,publickey,privatekey){
+function AdminForCom(DB,publickey,privatekey){
   MongoClient.connect(url, function(err, db) { //connect DB url
       if (err) throw err;
-      var dbo = db.db(company);
+      var dbo = db.db(DB);
       dbo.createCollection('CompanyData', function(err, res) { //create collection 
         if (err) throw err;
         var myobj = [
-          { _id: publickey,value: privatekey }
+          { _id: DB,publickey: publickey ,value: privatekey }
         ];
         dbo.collection('CompanyData').insertMany(myobj, function(err, res) { //insertMany
-          if (err) throw err;
-         
+          if (err) throw err;  
+                
         db.close();
-      }); 
+      });
     });
+    dbo.createCollection("BORROW_INVOICE", function(err, res) {
+      if (err) throw err;
+      db.close();
+    });
+    dbo.createCollection("ENDORSE_LOAN", function(err, res) {
+      if (err) throw err;
+      db.close();
+    });
+    dbo.createCollection("INVOICE", function(err, res) {
+      if (err) throw err;
+      db.close();
+    });
+    dbo.createCollection("PO", function(err, res) {
+      if (err) throw err;
+      db.close();
+    });
+    
     })       
   return ;
 }
+
  
 module.exports = {
     DBwrite: DBwrite,
     DBread: DBread,
+    DBreadPublic :DBreadPublic,
     AdminDBwrite: AdminDBwrite,
-    CreateDbForCompany: CreateDbForCompany  
+    AdminForCom: AdminForCom  
 }
+
+

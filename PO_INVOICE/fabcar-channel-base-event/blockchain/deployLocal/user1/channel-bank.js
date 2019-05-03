@@ -95,7 +95,7 @@ return 1
 
                 var INFORMATION = JSON.parse(decrypted)
                 console.log('decrypted: ', JSON.parse(decrypted)); 
-                console.log("---------------------------------") 
+                console.log(`-------------- End ${INFORMATION.TYPE}------------------`)
                 var INVOICE = JSON.parse(decrypted) //ค่าใบขอกู้ทั้งหมด
                 // console.log(INVOICE.INVOICE) /// ค่าใบอินวอย
                 var publckey = await db.DBreadPublic("bank","CompanyData" , "bank")
@@ -107,9 +107,9 @@ return 1
                 var checkID = "0"
                 var checkinvoice = "0"
                 try {
-                    checkhash = await db.DBread(INFORMATION.BANK,INFORMATION.TYPE , results.KEY)
-                    checkID = await db.DBread(INFORMATION.BANK,INFORMATION.TYPE , INFORMATION.BORROWKEY)  
-                    checkinvoice = await db.DBread(INFORMATION.BANK,INVOICE.INVOICE.TYPE , INVOICE.INVOICE.KEY)  
+                    checkhash = await db.DBread(INFORMATION.BANK,INFORMATION.TYPE,results.KEY)
+                    checkID = await db.DBread(INFORMATION.BANK,INFORMATION.TYPE,INFORMATION.BORROWKEY)  
+                    checkinvoice = await db.DBread(INFORMATION.BANK,INVOICE.INVOICE.TYPE,INVOICE.INVOICE.KEY)  
                 } catch (error) {
                     // console.log(error)
                 }

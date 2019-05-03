@@ -223,6 +223,26 @@ new toBC(bcuserName).Request_Verify_Invoice(req.body).then((result) => {
   
 });
 
+app.post('/endorse_loan', function (req, res, next) {
+  let functionName = '[API: POST /api/v1/endorse_loan]';
+  getBANK(req.body).then((getkey) => {
+    const bcuserName = `${getkey}`
+new toBC(bcuserName).endorse_loan(req.body).then((result) => {
+    res.status(201);
+    res.json(result.message);
+  })
+  .catch((error) => {
+    logger.error(`${functionName} Failed to transfer new Service Request: ${error}`);
+    res.status(500);
+    res.json({
+      code: 500,
+      message: `Failed to transfer new Service Request: ${error}`
+    });
+  });
+})
+  
+});
+
 //#############################################################################
 //############################### ADMIN #######################################
 //#############################################################################
