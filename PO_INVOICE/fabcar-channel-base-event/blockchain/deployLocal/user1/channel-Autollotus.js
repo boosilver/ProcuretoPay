@@ -65,7 +65,7 @@ return 1
         ///localhost org1 peer0 
         ChannelEventArray.push(channel.newChannelEventHub("localhost:7051"))
         })
-        console.log('THEMALL');
+        console.log('LOTUS');
     ChannelEventArray.forEach(ChannelEvent => {
        var ChainCodeEvent = ChannelEvent.registerChaincodeEvent(chaincodeid, chaincodeEventName,
         async(event, block_num, txnid, status) => {
@@ -80,7 +80,7 @@ return 1
             // console.log("VALUE : "+results.VALUE+"\n   in block number : "+block_num)
             const key = new NodeRSA();
             const ciphertext = results.VALUE
-            var keyprivate = await db.DBread("themall", "CompanyData", "themall")  
+            var keyprivate = await db.DBread("lotus", "CompanyData", "lotus")   //// อันนี้ต้องทำของใครของมัน อันนี้ของโลตัส
             // var pemFile = path.resolve(__dirname,`../../../controller/LOTUS/private_key.pem`)
             // var keyprivate =fs.readFileSync(pemFile)
             key.importKey(keyprivate,'pkcs1-private-pem');
@@ -93,35 +93,24 @@ return 1
                 // console.log('decrypted: ', decrypted);
                 var INFORMATION = JSON.parse(decrypted)
                 console.log('decrypted: ', JSON.parse(decrypted));
-                console.log(`-------------- End ${INFORMATION.TYPE}------------------`)
+                console.log("---------------------------------")
                 var checkhash = "0"
                 var checkID = "0"
                 try {
-                    checkhash = await db.DBread(INFORMATION.TO,INFORMATION.TYPE.toUpperCase() , results.KEY)
-                    checkID = await db.DBread(INFORMATION.TO,INFORMATION.TYPE.toUpperCase() , INFORMATION.KEY)  
+                    checkhash = await db.DBread(INFORMATION.TO,INFORMATION.TYPE , results.KEY)
+                    checkID = await db.DBread(INFORMATION.TO,INFORMATION.TYPE , INFORMATION.KEY)  
                 } catch (error) {
                     // console.log(error)
                 }
-                //////////
-                if(INFORMATION.VERIFY == "Verify"){
-                    var Verifyhash = await db.DBread("themall",INFORMATION.TYPE.toUpperCase() , INFORMATION.KEY)
-                    var Verifycrypt = await db.DBread("themall",INFORMATION.TYPE.toUpperCase() , Verifyhash)
-                    // var keyprivate = await db.DBread("lotus", "CompanyData", "lotus")
-                    key.importKey(keyprivate,'pkcs1-private-pem');
-                    var decryptedlocal = key.decrypt(Verifycrypt, 'utf8');
-                    var Infodecryp = JSON.parse(decryptedlocal)
-                    console.log(decryptedlocal)
-                    // console.log(Infodecryp.TO)
-                    if(INFORMATION.TO == Infodecryp.TO && INFORMATION.FORM == Infodecryp.FORM &&INFORMATION.TYPE == Infodecryp.TYPE
-                        && INFORMATION.KEY == Infodecryp.KEY && INFORMATION.VALUE == Infodecryp.VALUE && INFORMATION.DATE ==Infodecryp.DATE
-                        && INFORMATION.SALT ==Infodecryp.SALT){
-                        console.log("kuy")
+                ///////////////
+                // if(){
 
-                        /// ลงบล็อค
-                    }
-                }else if ((checkhash && checkID) == "0"){
-                    db.DBwrite(INFORMATION.TO,INFORMATION.TYPE.toUpperCase() , results.KEY, results.VALUE)
-                    db.DBwrite(INFORMATION.TO,INFORMATION.TYPE.toUpperCase() , INFORMATION.KEY, results.KEY)
+                // }
+
+                ///////////////
+                if ((checkhash && checkID) == "0"){
+                    db.DBwrite(INFORMATION.TO,INFORMATION.TYPE , results.KEY, results.VALUE)
+                    db.DBwrite(INFORMATION.TO,INFORMATION.TYPE , INFORMATION.KEY, results.KEY)
                 }
                 if (decrypted == all) {
                     console.log('--------- correct salt -----------')

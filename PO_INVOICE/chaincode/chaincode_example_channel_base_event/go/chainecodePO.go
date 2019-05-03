@@ -43,8 +43,8 @@ func (t *FundTransferChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Resp
 		return t.CreatePO(stub, args)
 	} else if function == "CreateInvoice" {
 		return t.CreateInvoice(stub, args)
-	} else if function == "CheckUser" {
-		return t.CheckUser(stub, args)
+	} else if function == "GetValue" {
+		return t.GetValue(stub, args)
 	} else if function == "StoreKey" {
 		return t.StoreKey(stub, args)
 	} else if function == "PushInBlockchain" {
@@ -203,7 +203,7 @@ func (t *FundTransferChaincode) PushInBlockchain(stub shim.ChaincodeStubInterfac
 //#############################################################################
 //############################### GET #######################################
 //#############################################################################
-func (t *FundTransferChaincode) CheckUser(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+func (t *FundTransferChaincode) GetValue(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	var ID string
 	var USER string
 	var err error

@@ -81,6 +81,6 @@ docker exec -e "CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/msp/users/Admin@org4.ex
 # # Join peer0.org4.example.com to the PrivateChannel3.
 # docker exec -e "CORE_PEER_LOCALMSPID=Org4MSP" -e "CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/msp/users/Admin@org4.example.com/msp" peer0.org4.example.com peer channel join -b privatechannel3.block
 
-# # # update anchors peer in PrivateChannel3
+# # update anchors peer in PrivateChannel3
 # docker exec -e "CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/msp/users/Admin@org3.example.com/msp" -e "CORE_PEER_LOCALMSPID=Org3MSP" -e "CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt" peer0.org3.example.com  peer channel update -o orderer.example.com:7050 -c privatechannel3 -f /etc/hyperledger/configtx/PrivateOrg3MSPanchors3.tx 
 # docker exec -e "CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/msp/users/Admin@org4.example.com/msp" -e "CORE_PEER_LOCALMSPID=Org4MSP" -e "CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org4.example.com/peers/peer0.org4.example.com/tls/ca.crt" peer0.org4.example.com  peer channel update -o orderer.example.com:7050 -c privatechannel3 -f /etc/hyperledger/configtx/PrivateOrg4MSPanchors3.tx 

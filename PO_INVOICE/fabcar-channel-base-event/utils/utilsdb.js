@@ -34,6 +34,19 @@ var data ;
 
   return data;
 }
+async function DBreadPublic(company,collections,key){
+  var data ;
+   db = await MongoClient.connect(url) 
+   if (!db) console.log ('error to connect database server ')
+      var dbo = db.db(company);
+      result = await dbo.collection(collections).findOne({_id: key})
+      if (!result) console.log ('data not found ')
+           //console.log(result.name);
+            data = result.publickey
+            db.close();
+  
+    return data;
+  }
 function AdminDBwrite(NameCompany,publickey,privatekey){
   MongoClient.connect(url, function(err, db) { //connect DB url
       if (err) throw err;
@@ -62,11 +75,28 @@ function AdminForCom(DB,publickey,privatekey){
           { _id: DB,publickey: publickey ,value: privatekey }
         ];
         dbo.collection('CompanyData').insertMany(myobj, function(err, res) { //insertMany
-          if (err) throw err;
-         
+          if (err) throw err;  
+                
         db.close();
       });
     });
+    dbo.createCollection("BORROW_INVOICE", function(err, res) {
+      if (err) throw err;
+      db.close();
+    });
+    dbo.createCollection("ENDORSE_LOAN", function(err, res) {
+      if (err) throw err;
+      db.close();
+    });
+    dbo.createCollection("INVOICE", function(err, res) {
+      if (err) throw err;
+      db.close();
+    });
+    dbo.createCollection("PO", function(err, res) {
+      if (err) throw err;
+      db.close();
+    });
+    
     })       
   return ;
 }
@@ -75,6 +105,9 @@ function AdminForCom(DB,publickey,privatekey){
 module.exports = {
     DBwrite: DBwrite,
     DBread: DBread,
+    DBreadPublic :DBreadPublic,
     AdminDBwrite: AdminDBwrite,
     AdminForCom: AdminForCom  
 }
+
+
