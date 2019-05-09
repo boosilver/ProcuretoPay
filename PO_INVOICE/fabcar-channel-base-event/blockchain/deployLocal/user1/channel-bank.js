@@ -96,32 +96,61 @@ return 1
                 var INFORMATION = JSON.parse(decrypted)
                 console.log('decrypted: ', JSON.parse(decrypted)); 
                 console.log(`-------------- End ${INFORMATION.TYPE}------------------`)
-                var INVOICE = JSON.parse(decrypted) //ค่าใบขอกู้ทั้งหมด
-                // console.log(INVOICE.INVOICE) /// ค่าใบอินวอย
+                var BORROW = JSON.parse(decrypted) //ค่าใบขอกู้ทั้งหมด
+                // console.log(BORROW.INVOICE) /// ค่าใบอินวอย
+                
                 var publckey = await db.DBreadPublic("bank","CompanyData" , "bank")
                 key.importKey(publckey, 'pkcs1-public-pem');
-                const ciphertext2 = key.encrypt(INVOICE.INVOICE, 'base64', 'utf8');
+                // console.log(INFORMATION.TYPE)
+
+                if (INFORMATION.TYPE == "Auto Verify") {
+                    // console.log(INFORMATION.PO)
+                    var PO = JSON.parse(INFORMATION.PO)
+                    
+                    ////////////////////////////////////////////
+                    const Autociphertext = key.encrypt(PO, 'base64', 'utf8'); //เอ็นคลิบแต่ละครั้ง จะได้คนละตัว
+                    // console.log(INFORMATION.BANK)
+                    // console.log(PO.TYPE)
+                    // console.log(PO.KEY)
+                    // console.log(Autociphertext)
+                    // console.log("--------------------")
+                    var checkPO ="0"
+                    try {
+                        checkPO = await db.DBread(INFORMATION.BANK,PO.TYPE,PO.KEY)
+                      
+                    } catch (error) {
+                        // console.log(error)
+                    }
+                    // console.log(checkPO)
+                    if (checkPO == "0"){
+                        // console.log("aiaiaiaiai")
+                        db.DBwrite(INFORMATION.BANK,PO.TYPE , PO.KEY, Autociphertext)
+                    }
+                    // db.DBwrite(INFORMATION.BANK,PO.TYPE , PO.KEY, Autociphertext)
+                    ////////////////////////////////////////////////
+                }else {
+                    const ciphertext2 = key.encrypt(BORROW.INVOICE, 'base64', 'utf8');
                 // console.log(ciphertext2)
-               
-                var checkhash = "0"
-                var checkID = "0"
-                var checkinvoice = "0"
+                
+                var checkID = ""
                 try {
-                    checkhash = await db.DBread(INFORMATION.BANK,INFORMATION.TYPE,results.KEY)
-                    checkID = await db.DBread(INFORMATION.BANK,INFORMATION.TYPE,INFORMATION.BORROWKEY)  
-                    checkinvoice = await db.DBread(INFORMATION.BANK,INVOICE.INVOICE.TYPE,INVOICE.INVOICE.KEY)  
+                    // checkhash = await db.DBread(INFORMATION.BANK,INFORMATION.TYPE,results.KEY)
+                    // checkID = await db.DBread(INFORMATION.TO, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|`+INFORMATION.KEY)
+                    checkID = await db.DBread(INFORMATION.BANK,INFORMATION.TYPE,`${INFORMATION.TYPE}_BODY|`+INFORMATION.BORROWKEY)  
+                    // checkinvoice = await db.DBread(INFORMATION.BANK,INVOICE.INVOICE.TYPE,INVOICE.INVOICE.KEY)  
                 } catch (error) {
                     // console.log(error)
                 }
-                if ((checkhash && checkID ) == "0"){
-                    // console.log("00000000000")
-                    db.DBwrite(INFORMATION.BANK,INFORMATION.TYPE , results.KEY, results.VALUE) //เก็บแฮด คู่ เอ็นคลิบ
-                    db.DBwrite(INFORMATION.BANK,INFORMATION.TYPE , INFORMATION.BORROWKEY, results.KEY) // เก็บไอดี คู่แฮด
-                    db.DBwrite(INFORMATION.BANK,INVOICE.INVOICE.TYPE , INVOICE.INVOICE.KEY, ciphertext2) // เก็บข้อมูลใบอินวอย
+                 if (!checkID){
+                    // db.DBwrite(INFORMATION.BANK,INFORMATION.TYPE , results.KEY, results.VALUE) //เก็บแฮด คู่ เอ็นคลิบ
+                    db.DBwrite3(INFORMATION.BANK,INFORMATION.TYPE , `${INFORMATION.TYPE}_BODY|`+INFORMATION.BORROWKEY, INFORMATION,results.KEY) //เก็บข้อมูลใบกู้
+                    db.DBwrite(INFORMATION.BANK,BORROW.INVOICE.TYPE , `${BORROW.INVOICE.TYPE}_BODY|`+BORROW.INVOICE.KEY, BORROW.INVOICE) // เก็บข้อมูลใบอินวอย
+                    db.DBwrite(INFORMATION.BANK,"PO" , `PO_SALT|`+BORROW.INVOICE.POKEY, BORROW.SALT)
                 }
                 if (decrypted == all) {
                     console.log('--------- correct salt -----------')
                 }
+                }  
             
             } catch (error) {
                 // console.log(error)

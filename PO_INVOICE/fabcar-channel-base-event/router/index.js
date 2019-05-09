@@ -98,12 +98,32 @@ new toBC(bcuserName).CreatePO(req.body).then((result) => {
 })
   
 });
-app.post('/CheckPO', function (req, res, next) {
-  let functionName = '[API: POST /api/v1/CheckPO]';
+app.post('/GetPO', function (req, res, next) {
+  let functionName = '[API: POST /api/v1/GetPO]';
 
   getUser(req.body).then((getkey) => {
     const bcuserName = `${getkey}`
-new toBC(bcuserName).CheckPO(req.body).then((result) => {
+new toBC(bcuserName).GetPO(req.body).then((result) => {
+    res.status(201);
+    res.json(result.message);
+  })
+  .catch((error) => {
+    logger.error(`${functionName} Failed to check new Service Request: ${error}`);
+    res.status(500);
+    res.json({
+      code: 500,
+      message: `Failed to check new Service Request: ${error}`
+    });
+  });
+})
+  
+}); 
+app.post('/GetValue', function (req, res, next) {
+  let functionName = '[API: POST /api/v1/GetValue]';
+
+  getUser(req.body).then((getkey) => {
+    const bcuserName = `${getkey}`
+new toBC(bcuserName).GetValue(req.body).then((result) => {
     res.status(201);
     res.json(result.message);
   })

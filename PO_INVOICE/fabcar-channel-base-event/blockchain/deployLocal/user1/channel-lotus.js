@@ -18,33 +18,22 @@ const NodeRSA = require('node-rsa');
 const fs = require("fs")
 const db = require('../../../utils/utilsdb')
 const CheckUser = 'CheckUser';
+const toBC = require('../../../controller/toBC')
 // const blockchain = require('../blockchain/service');
-// const blockchain = require('../../service')
-const INVOKE_ATTRIBUTES = ['devorgId']; 
+const blockchain = require('../../service')
+const INVOKE_ATTRIBUTES = ['devorgId'];
+const logger = require('../../../utils/logger');
 // setup the fabric network
 // var channel = fabric_client.newChannel('privatechannel1');
 //  var channel2 = fabric_client.newChannel('privatechannel2');
 var channelArray = []
 const chaincodeid = "fabcarevent"
 const chaincodeEventName = "event"
-
+blockchain.init();
 var member_user = null;
 var store_path = path.join(__dirname, 'hfc-key-store');
 console.log('Store path:' + store_path);
 var tx_id = null;
-
-async function Get_Key(getkey, company) {
-    console.log(getkey)
-    console.log(company)
-    console.log("++-+--+-+-+Getkey-+-+-+-+--+-+-+-")
-    var result = await blockchain.query(getkey.enrollID, getkey.fcnname, company, INVOKE_ATTRIBUTES)
-    // blockchain.query(getkey.enrollID, getkey.fcnname, company, INVOKE_ATTRIBUTES).then((result) => {
-    let resultParsed = JSON.parse(result.result.toString('utf8'));
-    console.log(resultParsed.PUBLIC_KEY)
-    console.log("++-+--+-+-+Affter Getkey-+-+-+-+--+-+-+-")
-    return (resultParsed.PUBLIC_KEY);
-}
-
 
 // create the key value store as defined in the fabric-client/config/default.json 'key-value-store' setting
 Fabric_Client.newDefaultKeyValueStore({
@@ -94,9 +83,6 @@ Fabric_Client.newDefaultKeyValueStore({
                     // let StringUnicod = bufferOriginal.toString('utf8')
                     // var  money =parseInt(StringUnicod, 10);
                     var results = JSON.parse(event.payload.toString('utf8'))
-                    // console.log("lllll"+results)
-                    // console.log("KEY : "+results.KEY)
-                    // console.log("VALUE : "+results.VALUE+"\n   in block number : "+block_num)
                     const key = new NodeRSA();
                     const ciphertext = results.VALUE
                     var keyprivate = await db.DBread("lotus", "CompanyData", "lotus")   //// อันนี้ต้องทำของใครของมัน อันนี้ของโลตัส
@@ -111,60 +97,93 @@ Fabric_Client.newDefaultKeyValueStore({
                         // console.log('decrypted: ', decrypted);
                         var INFORMATION = JSON.parse(decrypted)
                         console.log('decrypted: ', INFORMATION);
+                        var DATABASE = {}
+                        if (INFORMATION.TYPE == "PO") {
+                            DATABASE = {
+                                TO: INFORMATION.TO,
+                                FORM: INFORMATION.FORM, 
+                                TYPE: INFORMATION.TYPE, 
+                                KEY: INFORMATION.KEY,
+                                VALUE: INFORMATION.VALUE,
+                                DATE: INFORMATION.DATE,
+                            }
+                        } else if(INFORMATION.TYPE == "INVOICE") {
+                            DATABASE = {
+                                TO: INFORMATION.TO,
+                                FORM: INFORMATION.FORM,  
+                                TYPE: INFORMATION.TYPE, 
+                                KEY: INFORMATION.KEY,
+                                POKEY: INFORMATION.POKEY,
+                                VALUE: INFORMATION.VALUE,
+                                DATE: INFORMATION.DATE,
+                            }
+                        }else if(INFORMATION.TYPE == "ENDORSE_LOAN") {
+                            DATABASE = {
+                                TO: INFORMATION.TO,
+                                BANK: INFORMATION.BANK, 
+                                TYPE: INFORMATION.TYPE, 
+                                KEY: INFORMATION.KEY,
+                                PRICE_BORROW: INFORMATION.PRICE_BORROW,
+                                DATE: INFORMATION.DATE,
+                            }
+                        }
                         // console.log('decrypted bank: ', INFORMATION.BANK);
-                        console.log(`-------------- End ${INFORMATION.TYPE}------------------`)
-                        var checkhash = "0"
-                        var checkID = "0"
+                        if (INFORMATION.VERIFY == "Verify") {
+                            console.log(`-------------- End ${INFORMATION.VERIFY}------------------`)
+                        } else console.log(`-------------- End ${INFORMATION.TYPE}------------------`)
+                        var checkID = ""
                         try {
                             // console.log(INFORMATION.TO)
-                            checkhash = await db.DBread(INFORMATION.TO, INFORMATION.TYPE, results.KEY)  /// จะทำเฉพาะตอนที่ไม่ใช่ verify 
-                            checkID = await db.DBread(INFORMATION.TO, INFORMATION.TYPE, INFORMATION.KEY)
+                            // checkhash = await db.DBread(INFORMATION.TO, INFORMATION.TYPE, results.KEY)  /// จะทำเฉพาะตอนที่ไม่ใช่ verify 
+                            checkID = await db.DBread(INFORMATION.TO, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.KEY)
                         } catch (error) {
                             // console.log(error)
                         }
+
                         ///////////////
                         if (INFORMATION.VERIFY == "Verify") {
-                            var Verifyhash = await db.DBread("lotus", INFORMATION.TYPE, INFORMATION.KEY)
-                            var Verifycrypt = await db.DBread("lotus", INFORMATION.TYPE, Verifyhash)
-                            // console.log(Verifyhash)
-                            // var keyprivate = await db.DBread("lotus", "CompanyData", "lotus")
-                            key.importKey(keyprivate, 'pkcs1-private-pem');
-                            var decryptedlocal = key.decrypt(Verifycrypt, 'utf8'); /// invoice
-                            var Infodecryp = JSON.parse(decryptedlocal)
-                            // console.log(decryptedlocal) // invoice
-
-                            if (INFORMATION.TO == Infodecryp.TO && INFORMATION.FORM == Infodecryp.FORM && INFORMATION.TYPE == Infodecryp.TYPE
-                                && INFORMATION.KEY == Infodecryp.KEY &&INFORMATION.POKEY == Infodecryp.POKEY && INFORMATION.VALUE == Infodecryp.VALUE && INFORMATION.DATE == Infodecryp.DATE
-                                && INFORMATION.SALT == Infodecryp.SALT) { //// เช็คว่าที่ส่งมาตรงกับในดาต้าเบสไหม
-                                // console.log("kuy")
+                            // var Verifyhash = await db.DBread("lotus", INFORMATION.TYPE, "INVOICE_BODY|"+INFORMATION.KEY)
+                            // var Verifycrypt = await db.DBread("lotus", INFORMATION.TYPE, Verifyhash)
+                            var Verify = await db.DBread("lotus", INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.KEY)
+                            var SALT = await db.DBread("lotus", "PO", `PO_SALT|` + Verify.POKEY)
+                            if (INFORMATION.TO == Verify.TO && INFORMATION.FORM == Verify.FORM && INFORMATION.TYPE == Verify.TYPE
+                                && INFORMATION.KEY == Verify.KEY && INFORMATION.POKEY == Verify.POKEY && INFORMATION.VALUE == Verify.VALUE && INFORMATION.DATE == Verify.DATE
+                                && INFORMATION.SALT == SALT) { //// เช็คว่าที่ส่งมาตรงกับในดาต้าเบสไหม 
                                 var INFO
                                 if (INFORMATION.TYPE == "INVOICE") {
                                     INFO = "PO"
                                 } else INFO = "INVOICE"
-                                var hash_PO = await db.DBread("lotus", INFO, Infodecryp.POKEY) ///ด้านหลังต้องใช้เลขใบ PO
-                                var crypt_PO = await db.DBread("lotus", INFO, hash_PO)
-                                decryptedlocal = key.decrypt(crypt_PO, 'utf8'); /// PO
-                                // console.log("PO_INFO : "+decryptedlocal) // po
+                                var PO = await db.DBread("lotus", INFO, `${INFO}_BODY|` + INFORMATION.POKEY)
+                                var SALT = await db.DBread("lotus", INFO, `${INFO}_SALT|` + INFORMATION.POKEY)
+                                var getkey = {
+                                    FORM: "lotus",
+                                    BANK: INFORMATION.BANK,
+                                    PO: PO,
+                                    SALT: SALT,
+                                    SALT2: INFORMATION.SALT2,
+                                };
 
+                                var functionName = "eventlotus"
+                                // console.log("+++ : "+companydata)
+                                // console.log("+++"+getkey)
+                                new toBC("lotus").AutoPushInBlockchain(getkey).then((result) => {
+                                })
+                                    .catch((error) => {
+                                        logger.error(`${functionName} Failed to transfer new Service Request: ${error}`);
 
-                                // var getkey = {
-                                //     enrollID: "lotus",
-                                //     fcnname: CheckUser,
-                    
-                                // };
-                                // var companydata = [INFORMATION.BANK,
-                                //     "lotus",
-                                // ]
-                                // // toBC.CreatePO(getkey)
-                                // var Publickey = await Get_Key(getkey, companydata)
-                                // console.log("kuy = "+Publickey)
-                                /// ลงบล็อค invoke
+                                    });
                             }
-                        } else
-                            if ((checkhash && checkID) == "0") {
-                                db.DBwrite(INFORMATION.TO, INFORMATION.TYPE, results.KEY, results.VALUE)
-                                db.DBwrite(INFORMATION.TO, INFORMATION.TYPE, INFORMATION.KEY, results.KEY)
+                        } else if (!checkID) {
+                                if (INFORMATION.TYPE == "PO") {
+                                    await db.DBwrite3(INFORMATION.TO, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.KEY, DATABASE,results.KEY)
+                                    await db.DBwrite(INFORMATION.TO, INFORMATION.TYPE, `${INFORMATION.TYPE}_SALT|` + INFORMATION.KEY, INFORMATION.SALT)
+                                } else if (INFORMATION.TYPE == "INVOICE"){
+                                    await db.DBwrite3(INFORMATION.TO, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.KEY, DATABASE,results.KEY)
+                                }else if (INFORMATION.TYPE == "ENDORSE_LOAN"){
+                                    await db.DBwrite3(INFORMATION.TO, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.KEY, DATABASE,results.KEY)
+                                }
                             }
+                        
                         if (decrypted == all) {
                             console.log('--------- correct salt -----------')
                         }

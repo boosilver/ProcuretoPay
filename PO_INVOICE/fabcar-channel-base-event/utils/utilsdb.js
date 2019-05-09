@@ -21,6 +21,26 @@ function DBwrite(company,collections,key,value){
       })       
     return ;
 }
+
+function DBwrite3(company,collections,key,value1,value2){
+  MongoClient.connect(url, function(err, db) { //connect DB url
+      if (err) throw err;
+      var dbo = db.db(company);
+      dbo.createCollection(collections, function(err, res) { //create collection 
+        if (err) throw err;
+        var myobj = [
+          { _id: key, value: value1 , hash : value2}
+        ];
+        dbo.collection(collections).insertMany(myobj, function(err, res) { //insertMany
+          if (err) throw err;
+         
+        db.close();
+      });
+    });
+    })       
+  return ;
+}
+
 async function DBread(company,collections,key){
 var data ;
  db = await MongoClient.connect(url) 
@@ -34,6 +54,21 @@ var data ;
 
   return data;
 }
+
+async function DBreadHash(company,collections,key){
+  var data ;
+   db = await MongoClient.connect(url) 
+   if (!db) console.log ('error to connect database server ')
+      var dbo = db.db(company);
+      result = await dbo.collection(collections).findOne({_id: key})
+      if (!result) console.log ('data not found ')
+           //console.log(result.name);
+            data = result.hash
+            db.close();
+  
+    return data;
+  }
+
 async function DBreadPublic(company,collections,key){
   var data ;
    db = await MongoClient.connect(url) 
@@ -107,7 +142,10 @@ module.exports = {
     DBread: DBread,
     DBreadPublic :DBreadPublic,
     AdminDBwrite: AdminDBwrite,
-    AdminForCom: AdminForCom  
+    AdminForCom: AdminForCom,
+    DBwrite3:DBwrite3,
+    DBreadHash:DBreadHash
+
 }
 
 
