@@ -116,7 +116,7 @@ return 1
                     // console.log("--------------------")
                     var checkPO ="0"
                     try {
-                        checkPO = await db.DBread(INFORMATION.BANK,PO.TYPE,PO.KEY)
+                        checkPO = await db.DBread(INFORMATION.BANK,PO.TYPE,PO.PO_KEY)
                       
                     } catch (error) {
                         // console.log(error)
@@ -124,7 +124,7 @@ return 1
                     // console.log(checkPO)
                     if (checkPO == "0"){
                         // console.log("aiaiaiaiai")
-                        db.DBwrite(INFORMATION.BANK,PO.TYPE , PO.KEY, Autociphertext)
+                        db.DBwrite(INFORMATION.BANK,PO.TYPE , PO.PO_KEY, Autociphertext)
                     }
                     // db.DBwrite(INFORMATION.BANK,PO.TYPE , PO.KEY, Autociphertext)
                     ////////////////////////////////////////////////
@@ -144,8 +144,8 @@ return 1
                  if (!checkID){
                     // db.DBwrite(INFORMATION.BANK,INFORMATION.TYPE , results.KEY, results.VALUE) //เก็บแฮด คู่ เอ็นคลิบ
                     db.DBwrite3(INFORMATION.BANK,INFORMATION.TYPE , `${INFORMATION.TYPE}_BODY|`+INFORMATION.BORROWKEY, INFORMATION,results.KEY) //เก็บข้อมูลใบกู้
-                    db.DBwrite(INFORMATION.BANK,BORROW.INVOICE.TYPE , `${BORROW.INVOICE.TYPE}_BODY|`+BORROW.INVOICE.KEY, BORROW.INVOICE) // เก็บข้อมูลใบอินวอย
-                    db.DBwrite(INFORMATION.BANK,"PO" , `PO_SALT|`+BORROW.INVOICE.POKEY, BORROW.SALT)
+                    db.DBwrite(INFORMATION.BANK,BORROW.INVOICE.TYPE , `${BORROW.INVOICE.TYPE}_BODY|`+BORROW.INVOICE.INVOICE_KEY, BORROW.INVOICE) // เก็บข้อมูลใบอินวอย
+                    db.DBwrite(INFORMATION.BANK,"PO" , `PO_SALT|`+BORROW.INVOICE.PO_KEY, BORROW.SALT)
                 }
                 if (decrypted == all) {
                     console.log('--------- correct salt -----------')

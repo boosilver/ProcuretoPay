@@ -103,7 +103,7 @@ Fabric_Client.newDefaultKeyValueStore({
                                 TO: INFORMATION.TO,
                                 FORM: INFORMATION.FORM, 
                                 TYPE: INFORMATION.TYPE, 
-                                KEY: INFORMATION.KEY,
+                                PO_KEY: INFORMATION.PO_KEY,
                                 VALUE: INFORMATION.VALUE,
                                 DATE: INFORMATION.DATE,
                             }
@@ -112,8 +112,8 @@ Fabric_Client.newDefaultKeyValueStore({
                                 TO: INFORMATION.TO,
                                 FORM: INFORMATION.FORM,  
                                 TYPE: INFORMATION.TYPE, 
-                                KEY: INFORMATION.KEY,
-                                POKEY: INFORMATION.POKEY,
+                                INVOICE_KEY: INFORMATION.INVOICE_KEY,
+                                PO_KEY: INFORMATION.PO_KEY,
                                 VALUE: INFORMATION.VALUE,
                                 DATE: INFORMATION.DATE,
                             }
@@ -122,7 +122,7 @@ Fabric_Client.newDefaultKeyValueStore({
                                 TO: INFORMATION.TO,
                                 BANK: INFORMATION.BANK, 
                                 TYPE: INFORMATION.TYPE, 
-                                KEY: INFORMATION.KEY,
+                                INVOICE_KEY: INFORMATION.INVOICE_KEY,
                                 PRICE_BORROW: INFORMATION.PRICE_BORROW,
                                 DATE: INFORMATION.DATE,
                             }
@@ -132,29 +132,31 @@ Fabric_Client.newDefaultKeyValueStore({
                             console.log(`-------------- End ${INFORMATION.VERIFY}------------------`)
                         } else console.log(`-------------- End ${INFORMATION.TYPE}------------------`)
                         var checkID = ""
-                        try {
-                            // console.log(INFORMATION.TO)
-                            // checkhash = await db.DBread(INFORMATION.TO, INFORMATION.TYPE, results.KEY)  /// จะทำเฉพาะตอนที่ไม่ใช่ verify 
-                            checkID = await db.DBread(INFORMATION.TO, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.KEY)
-                        } catch (error) {
-                            // console.log(error)
+                        if (!INFORMATION.INVOICE_KEY){
+                            try { 
+                                checkID = await db.DBread(INFORMATION.TO, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.PO_KEY)
+                            } catch (error) {
+                                // console.log(error)
+                            }
+                        }else {
+                            try { 
+                                checkID = await db.DBread(INFORMATION.TO, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.INVOICE_KEY)
+                            } catch (error) {
+                                // console.log(error)
+                            }
                         }
-
-                        ///////////////
                         if (INFORMATION.VERIFY == "Verify") {
-                            // var Verifyhash = await db.DBread("lotus", INFORMATION.TYPE, "INVOICE_BODY|"+INFORMATION.KEY)
-                            // var Verifycrypt = await db.DBread("lotus", INFORMATION.TYPE, Verifyhash)
-                            var Verify = await db.DBread("lotus", INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.KEY)
-                            var SALT = await db.DBread("lotus", "PO", `PO_SALT|` + Verify.POKEY)
+                            var Verify = await db.DBread("lotus", INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.INVOICE_KEY)
+                            var SALT = await db.DBread("lotus", "PO", `PO_SALT|` + Verify.PO_KEY)
                             if (INFORMATION.TO == Verify.TO && INFORMATION.FORM == Verify.FORM && INFORMATION.TYPE == Verify.TYPE
-                                && INFORMATION.KEY == Verify.KEY && INFORMATION.POKEY == Verify.POKEY && INFORMATION.VALUE == Verify.VALUE && INFORMATION.DATE == Verify.DATE
+                                && INFORMATION.INVOICE_KEY == Verify.INVOICE_KEY && INFORMATION.PO_KEY == Verify.PO_KEY && INFORMATION.VALUE == Verify.VALUE && INFORMATION.DATE == Verify.DATE
                                 && INFORMATION.SALT == SALT) { //// เช็คว่าที่ส่งมาตรงกับในดาต้าเบสไหม 
                                 var INFO
                                 if (INFORMATION.TYPE == "INVOICE") {
                                     INFO = "PO"
                                 } else INFO = "INVOICE"
-                                var PO = await db.DBread("lotus", INFO, `${INFO}_BODY|` + INFORMATION.POKEY)
-                                var SALT = await db.DBread("lotus", INFO, `${INFO}_SALT|` + INFORMATION.POKEY)
+                                var PO = await db.DBread("lotus", INFO, `${INFO}_BODY|` + INFORMATION.PO_KEY)
+                                var SALT = await db.DBread("lotus", INFO, `${INFO}_SALT|` + INFORMATION.PO_KEY)
                                 var getkey = {
                                     FORM: "lotus",
                                     BANK: INFORMATION.BANK,
@@ -175,12 +177,12 @@ Fabric_Client.newDefaultKeyValueStore({
                             }
                         } else if (!checkID) {
                                 if (INFORMATION.TYPE == "PO") {
-                                    await db.DBwrite3(INFORMATION.TO, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.KEY, DATABASE,results.KEY)
-                                    await db.DBwrite(INFORMATION.TO, INFORMATION.TYPE, `${INFORMATION.TYPE}_SALT|` + INFORMATION.KEY, INFORMATION.SALT)
+                                    await db.DBwrite3(INFORMATION.TO, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.PO_KEY, DATABASE,results.KEY)
+                                    await db.DBwrite(INFORMATION.TO, INFORMATION.TYPE, `${INFORMATION.TYPE}_SALT|` + INFORMATION.PO_KEY, INFORMATION.SALT)
                                 } else if (INFORMATION.TYPE == "INVOICE"){
-                                    await db.DBwrite3(INFORMATION.TO, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.KEY, DATABASE,results.KEY)
+                                    await db.DBwrite3(INFORMATION.TO, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.INVOICE_KEY, DATABASE,results.KEY)
                                 }else if (INFORMATION.TYPE == "ENDORSE_LOAN"){
-                                    await db.DBwrite3(INFORMATION.TO, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.KEY, DATABASE,results.KEY)
+                                    await db.DBwrite3(INFORMATION.TO, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.INVOICE_KEY, DATABASE,results.KEY)
                                 }
                             }
                         

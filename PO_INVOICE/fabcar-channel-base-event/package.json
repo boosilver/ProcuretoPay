@@ -7,7 +7,8 @@
         "test": "echo \"Error: no test specified\" && exit 1",
         "startOrg1local": "CONFIG_ORG=config.json   PORT=7001   node server.js",
         "startOrg2local": "CONFIG_ORG=config2.json  PORT=7002   node server.js",
-        "startOrg4local": "CONFIG_ORG=config4.json  PORT=7004   node server.js"
+        "startOrg4local": "CONFIG_ORG=config4.json  PORT=7004   node server.js",
+        "eventLotus" : "CONFIG_ORG=config.json node ./blockchain/deployLocal/user1/channel-lotus.js"
     },
     "dependencies": {
         "@grpc/proto-loader": "^0.3.0",

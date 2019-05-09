@@ -75,6 +75,28 @@ app.post('/Genkey', function (req, res, next) {
   
 }) 
 });
+
+
+app.post('/Accept', function (req, res, next) {
+  let functionName = '[API: POST /api/v1/Accept]';
+  getFORM(req.body).then((getkey) => {
+    const bcuserName = `${getkey}`
+    console.log(req.body)
+new toBC(bcuserName).Accept(req.body).then((result) => {
+    res.status(201);
+    res.json(result.message);
+  })
+  .catch((error) => {
+    logger.error(`${functionName} Failed to transfer new Service Request: ${error}`);
+    res.status(500);
+    res.json({
+      code: 500,
+      message: `Failed to transfer new Service Request: ${error}`
+    });
+  });
+})
+  
+});
 //#############################################################################
 //############################### BUYER #######################################
 //#############################################################################
