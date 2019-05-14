@@ -20,9 +20,6 @@
 //     console.log('Starting node.js on port ' + port);
 // });
 
-
-
-
 const express = require('express');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
@@ -32,7 +29,7 @@ const logger = require('./utils/logger');
 const app = express();
 const port = process.env.PORT || 3000;
 // const swagger    =process.env.SWAGGER
-// const cors = require('cors')
+ const cors = require('cors')
 
 // const swaggerUi = require('swagger-ui-express'),
 //     swaggerDocument = require(`./api/${swagger}`);
@@ -58,7 +55,7 @@ app.use(bodyParser.urlencoded({
 }));
 app.use(bodyParser.json());
 app.use(bodyParser.text());
-//app.use(cors({origin: '*'}));
+app.use(cors({origin: '*'}));
 
 // app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use('/api/v1', require('./router'));
