@@ -5,10 +5,13 @@
     "main": "fabcar.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "startOrg1local": "CONFIG_ORG=config.json   PORT=7001   node server.js",
-        "startOrg2local": "CONFIG_ORG=config2.json  PORT=7002   node server.js",
-        "startOrg4local": "CONFIG_ORG=config4.json  PORT=7004   node server.js",
-        "eventLotus" : "CONFIG_ORG=config.json node ./blockchain/deployLocal/user1/channel-lotus.js"
+        "admin": "CONFIG_ORG=superuser.json  PORT=7001   node server.js ",
+        "lotus": "CONFIG_ORG=lotus.json PORT=7002   node server.js ",
+        "themall": "CONFIG_ORG=themall.json  PORT=7003   node server.js",
+        "bank": "CONFIG_ORG=bank.json  PORT=7004   node server.js",
+        "eventlotus" : "CONFIG_ORG=lotus.json node ./blockchain/deployLocal/lotus/channel-lotus.js",
+        "eventthemall" : "CONFIG_ORG=themall.json node ./blockchain/deployLocal/themall/channel-themall.js",
+        "eventbank" : "CONFIG_ORG=bank.json node ./blockchain/deployLocal/bank/channel-bank.js"
     },
     "dependencies": {
         "@grpc/proto-loader": "^0.3.0",

@@ -225,11 +225,11 @@ new toBC(bcuserName).Checkkey(req.body).then((result) => {
 //#############################################################################
 //############################### BANK #######################################
 //#############################################################################
-app.post('/BorrowInvoice', function (req, res, next) {
-  let functionName = '[API: POST /api/v1/BorrowInvoice]';
+app.post('/Loan', function (req, res, next) {
+  let functionName = '[API: POST /api/v1/Loan]';
   getFORM(req.body).then((getkey) => {
     const bcuserName = `${getkey}`
-new toBC(bcuserName).BorrowInvoice(req.body).then((result) => {
+new toBC(bcuserName).Loan(req.body).then((result) => {
     res.status(201);
     res.json(result.message);
   })
