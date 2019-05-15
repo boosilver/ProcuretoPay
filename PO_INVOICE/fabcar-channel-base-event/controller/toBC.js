@@ -163,7 +163,7 @@ class toBC {
             var DATABASE = {
                 TO: unparsedAttrs.TO.toLowerCase() || reject("Company_TO name not found"),
                 FORM: unparsedAttrs.FORM.toLowerCase() || reject("Company_FORM name not found"),
-                TYPE: "PO", 
+                TYPE: "PO",
                 PO_KEY: unparsedAttrs.PO_KEY || reject("PO_ID name not found"),
                 VALUE: unparsedAttrs.VALUE || reject("VALUE name not found"),
                 DATE: DATE,
@@ -196,15 +196,15 @@ class toBC {
             let args = [hash, ciphertext
             ];
             var collections = "PO"
-            var CheckPO ="don'have yet"
+            var CheckPO = "don'have yet"
             try {
-                CheckPO = await db.DBread(unparsedAttrs.FORM.toLowerCase(), collections, "PO_BODY|"+unparsedAttrs.PO_KEY)
-                
+                CheckPO = await db.DBread(unparsedAttrs.FORM.toLowerCase(), collections, "PO_BODY|" + unparsedAttrs.PO_KEY)
+
             } catch (error) {
                 // console.log(error)
             }
-            if(CheckPO =="don'have yet"){
-                blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, args, INVOKE_ATTRIBUTES).then(async(result) => {
+            if (CheckPO == "don'have yet") {
+                blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, args, INVOKE_ATTRIBUTES).then(async (result) => {
                     let resultParsed = result.result.toString('utf8');
                     // var resultParsed = Buffer.from(JSON.stringify(result.result)); 
                     // var resultParsed2 = JSON.parse(resultParsed.toJSON()).data
@@ -212,23 +212,23 @@ class toBC {
                     console.log(resultParsed)  //// ติดปัญหาแกะตัวอักษรไม่ได้
                     console.log("++-+--+-+-+-+--+-+-+-+-+-+--+-+-+-")
                     console.log(ciphertext);
-                    
+
                     console.log(unparsedAttrs.FORM.toLowerCase());
-                    var My_publckey = await db.DBreadPublic(unparsedAttrs.FORM.toLowerCase(),"CompanyData" , unparsedAttrs.FORM.toLowerCase())
+                    var My_publckey = await db.DBreadPublic(unparsedAttrs.FORM.toLowerCase(), "CompanyData", unparsedAttrs.FORM.toLowerCase())
                     key.importKey(My_publckey, 'pkcs1-public-pem');
                     const MY_ciphertext = key.encrypt(parsedAttrs, 'base64', 'utf8');
                     var My_hash = crypto.createHash('sha256')          //HASH FUCTION
-                    .update(MY_ciphertext)
-                    .digest('hex');
+                        .update(MY_ciphertext)
+                        .digest('hex');
                     // db.DBwrite(unparsedAttrs.FORM, collections, My_hash, MY_ciphertext)
                     // db.DBwrite(unparsedAttrs.FORM, collections, unparsedAttrs.KEY, My_hash)
-                    db.DBwrite3(unparsedAttrs.FORM.toLowerCase(), collections, "PO_BODY|"+unparsedAttrs.PO_KEY, DATABASE,hash)
-                    db.DBwrite(unparsedAttrs.FORM.toLowerCase(), collections, "PO_SALT|"+unparsedAttrs.PO_KEY, SALT)
-    
+                    db.DBwrite3(unparsedAttrs.FORM.toLowerCase(), collections, "PO_BODY|" + unparsedAttrs.PO_KEY, DATABASE, hash)
+                    db.DBwrite(unparsedAttrs.FORM.toLowerCase(), collections, "PO_SALT|" + unparsedAttrs.PO_KEY, SALT)
+
                     ////////////
                     // db.DBwrite(unparsedAttrs.TO, collections, hash, ciphertext)        /// ให้แก้ไปเก็บลงในต้าเบสของคนที่เราจะส่งให้
                     // db.DBwrite(unparsedAttrs.TO, collections, unparsedAttrs.KEY, hash) /// ทาง event hub
-    
+
                     // MongoClient.connect(url, function (err, db) { //connect DB url
                     //     if (err) throw err;
                     //     var dbo = db.db("PO");
@@ -245,7 +245,7 @@ class toBC {
                     //         });
                     //     });
                     // })
-    
+
                     resolve({
                         message: {
                             TO: parsedAttrs.TO.toLowerCase(),
@@ -261,10 +261,10 @@ class toBC {
                     logger.error(`${functionName}  ${e}`);
                     reject(` ${e}`);
                 });
-            }else {
+            } else {
                 reject("Already have  PO")
             }
-            
+
         })
 
     }
@@ -298,14 +298,14 @@ class toBC {
                 VALUE: unparsedAttrs.VALUE || reject("VALUE name not found"),
                 DATE: DATE,
             }
-            var CheckPO =""
+            var CheckPO = ""
             try {
-                CheckPO = await db.DBread(unparsedAttrs.FORM.toLowerCase(), "PO", "PO_BODY|"+unparsedAttrs.PO_KEY)
-                console.log("***********-------------++++++++++++++++++++++"+CheckPO)
+                CheckPO = await db.DBread(unparsedAttrs.FORM.toLowerCase(), "PO", "PO_BODY|" + unparsedAttrs.PO_KEY)
+                console.log("***********-------------++++++++++++++++++++++" + CheckPO)
             } catch (error) {
                 reject("PO not available")
             }
-            
+
             // var COMPANY = unparsedAttrs.COMPANY
             invokeObject = {
                 enrollID: self.enrollID,
@@ -331,15 +331,15 @@ class toBC {
             let args = [hash, ciphertext
             ];
             var collections = "INVOICE"
-            var CheckInvoice ="don'have yet"
+            var CheckInvoice = "don'have yet"
             try {
-                CheckInvoice = await db.DBread(unparsedAttrs.FORM.toLowerCase(), collections, "INVOICE_BODY|"+unparsedAttrs.INVOICE_KEY)
-                
+                CheckInvoice = await db.DBread(unparsedAttrs.FORM.toLowerCase(), collections, "INVOICE_BODY|" + unparsedAttrs.INVOICE_KEY)
+
             } catch (error) {
                 // console.log(error)
             }
-            if(CheckPO != "" && CheckInvoice == "don'have yet"){  /// po ต้องไม่ว่าง และ invoice ยังไม่ถูกใช้
-                blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, args, INVOKE_ATTRIBUTES).then(async(result) => {
+            if (CheckPO != "" && CheckInvoice == "don'have yet") {  /// po ต้องไม่ว่าง และ invoice ยังไม่ถูกใช้
+                blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, args, INVOKE_ATTRIBUTES).then(async (result) => {
                     let resultParsed = result.result.toString('utf8');
                     console.log("++-+--+-+-+-+--+-+-+-+-+-+--+-+-+-")
                     console.log(resultParsed)
@@ -351,10 +351,10 @@ class toBC {
                     // .update(MY_ciphertext)
                     // .digest('hex');
                     // db.DBwrite(unparsedAttrs.FORM, collections, My_hash, MY_ciphertext)
-                    db.DBwrite3(unparsedAttrs.FORM.toLowerCase(), collections, "INVOICE_BODY|"+unparsedAttrs.INVOICE_KEY, DATABASE,hash)
+                    db.DBwrite3(unparsedAttrs.FORM.toLowerCase(), collections, "INVOICE_BODY|" + unparsedAttrs.INVOICE_KEY, DATABASE, hash)
                     ////////////
-                    
-    
+
+
                     resolve({
                         message: {
                             TO: parsedAttrs.TO.toLowerCase(),
@@ -370,10 +370,10 @@ class toBC {
                     logger.error(`${functionName}  ${e}`);
                     reject(` ${e}`);
                 });
-            }else {
+            } else {
                 reject(" Already have  Invoice")
             }
-            
+
         })
     }
 
@@ -381,50 +381,63 @@ class toBC {
         let self = this;
         let functionName = '[toBC.Loan(unparsedAttrs)]';
         return new Promise(async (resolve, reject) => {
-            
+
             let invokeObject = {};
             var parsedAttrs = {}
             let getkey = {};
             let companydata = [];
             var collections = ""
+            var permission = ""
             const key = new NodeRSA();
             var DATE = day.getDate() + "-" + (day.getMonth() + 1) + "-" + day.getFullYear();
-            if(unparsedAttrs.DOC_LOAN.toUpperCase() != "PO" && unparsedAttrs.DOC_LOAN.toUpperCase() != "INVOICE"){
+            if (unparsedAttrs.DOC_LOAN.toUpperCase() != "PO" && unparsedAttrs.DOC_LOAN.toUpperCase() != "INVOICE") {
                 reject("DOC_LOAN name not found")
-            }else collections = unparsedAttrs.DOC_LOAN.toUpperCase()
+            } else collections = unparsedAttrs.DOC_LOAN.toUpperCase()
             console.log(collections)
             console.log("---------------------------------------------")
+            var Check_Loan = ""
             try {
-                var data = await db.DBread(unparsedAttrs.FORM.toLowerCase(), collections, `${collections}_BODY|`+unparsedAttrs.KEY)
+                Check_Loan = await db.DBread(unparsedAttrs.FORM.toLowerCase(), `LOAN_${collections}`, `LOAN_${collections}_BODY|${unparsedAttrs.FORM.toLowerCase()}|${unparsedAttrs.BANK.toLowerCase()}|` + unparsedAttrs.LOAN_KEY)
+                console.log(Check_Loan)
+                console.log("---------------------------------------------")
+            } catch (error) {
+                // reject("Loan already been used")
+            }
+            try {
+                var data = await db.DBread(unparsedAttrs.FORM.toLowerCase(), collections, `${collections}_BODY|` + unparsedAttrs.KEY)
             } catch (error) {
                 reject("Invoice not available")
             }
-            var SALT = await db.DBread(unparsedAttrs.FORM.toLowerCase(), "PO", "PO_SALT|"+data.PO_KEY)
-            if(collections == "INVOICE"){
-                    parsedAttrs = {
+            var SALT = await db.DBread(unparsedAttrs.FORM.toLowerCase(), "PO", "PO_SALT|" + data.PO_KEY)
+            if (collections == "INVOICE") {
+                parsedAttrs = {
                     BANK: unparsedAttrs.BANK.toLowerCase() || reject("Company name not found"),
                     FORM: unparsedAttrs.FORM.toLowerCase() || reject("FORM name not found"), //ไปอ่านไฟล์คอนฟิกของบริษัทเราเอง 
-                    TYPE: `BORROW_${collections}`, 
-                    BORROWKEY: unparsedAttrs.BORROWKEY || reject("BORROWKEY name not found"),
+                    TYPE: `LOAN_${collections}`,
+                    LOAN_KEY: unparsedAttrs.LOAN_KEY || reject("LOAN_KEY name not found"),
                     PO_KEY: data.PO_KEY,
                     INVOICE_KEY: data.INVOICE_KEY || reject("KEY name not found"),
                     DATE: DATE,
                     INVOICE: data,
                     SALT: SALT,
                 }
-            }else {
-                    parsedAttrs = {
+            } else {
+                parsedAttrs = {
                     BANK: unparsedAttrs.BANK.toLowerCase() || reject("Company name not found"),
                     FORM: unparsedAttrs.FORM.toLowerCase() || reject("FORM name not found"), //ไปอ่านไฟล์คอนฟิกของบริษัทเราเอง 
-                    TYPE: `BORROW_${collections}`, 
-                    BORROWKEY: unparsedAttrs.BORROWKEY || reject("BORROWKEY name not found"),
+                    TYPE: `LOAN_${collections}`,
+                    LOAN_KEY: unparsedAttrs.LOAN_KEY || reject("LOAN_KEY name not found"),
                     PO_KEY: data.PO_KEY,
                     DATE: DATE,
                     PO: data,
                     SALT: SALT,
-                    }
+                }
+                if(unparsedAttrs.FORM.toLowerCase() == data.FORM){
+                    permission = "Can't"
+                    reject("Can't loan by PO")
+                }
             }
-            
+
             console.log(parsedAttrs)
             // var COMPANY = unparsedAttrs.COMPANY // อันเดียวกีับ to แก้ให้เป็นอันเดียวกัน
             invokeObject = {
@@ -450,37 +463,42 @@ class toBC {
             console.log('HASH Ciphertext Complete!!! : ', hash)
             let args = [hash, ciphertext
             ];
-            var collectionss = `BORROW_${collections}`
-            blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, args, INVOKE_ATTRIBUTES).then(async(result) => {
-                console.log("toBC");
-                let resultParsed = result.result.toString('utf8');
-                // db.DBwrite(unparsedAttrs.FORM, collectionss, hash, ciphertext)
-                // db.DBwrite(unparsedAttrs.FORM, collectionss, unparsedAttrs.BORROWKEY, hash)
-                db.DBwrite3(unparsedAttrs.FORM.toLowerCase(), collectionss, "BORROW_INVOICE_BODY|"+unparsedAttrs.BORROWKEY, parsedAttrs,hash)
-                resolve({
-                    message: {
-                        BANK: parsedAttrs.BANK.toLowerCase(),
-                        FORM: parsedAttrs.FORM.toLowerCase(),
-                        TYPE: parsedAttrs.TYPE,
-                        INVOICE_KEY: parsedAttrs.KEY,
-                        PO_KEY: data.PO_KEY,
-                        VALUE: parsedAttrs.VALUE,
-                        DATE: parsedAttrs.DATE,
-                        INVOICE: data,
-                        INVOICE2: data.KEY,
-                    }
+            var collectionss = `LOAN_${collections}`
+            if (!Check_Loan && !permission) {
+                blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, args, INVOKE_ATTRIBUTES).then(async (result) => {
+                    console.log("toBC");
+                    let resultParsed = result.result.toString('utf8');
+                    // db.DBwrite(unparsedAttrs.FORM, collectionss, hash, ciphertext)
+                    // db.DBwrite(unparsedAttrs.FORM, collectionss, unparsedAttrs.LOAN_KEY, hash)
+                    console.log(unparsedAttrs.FORM.toLowerCase());
+                    db.DBwrite3(unparsedAttrs.FORM.toLowerCase(), collectionss, `LOAN_${collections}_BODY|${unparsedAttrs.FORM.toLowerCase()}|${unparsedAttrs.BANK.toLowerCase()}|` + unparsedAttrs.LOAN_KEY, parsedAttrs, hash)
+                    resolve({
+                        message: {
+                            BANK: parsedAttrs.BANK.toLowerCase(),
+                            FORM: parsedAttrs.FORM.toLowerCase(),
+                            TYPE: parsedAttrs.TYPE,
+                            INVOICE_KEY: data.INVOICE_KEY,
+                            PO_KEY: data.PO_KEY,
+                            DATE: parsedAttrs.DATE,
+                            INVOICE: data,
+                            INVOICE2: data.KEY,
+                        }
+                    });
+                }).catch((e) => { /// e เปลี่ยนเป้น err ดีๆ
+                    logger.error(`${functionName}  ${e}`);
+                    reject(` ${e}`);
                 });
-            }).catch((e) => { /// e เปลี่ยนเป้น err ดีๆ
-                logger.error(`${functionName}  ${e}`);
-                reject(` ${e}`);
-            });
+            }else{
+                reject("Loan already been used")
+            }
+
         })
 
     }
 
-    Request_Verify_Invoice(unparsedAttrs) {
+    Request_Verify(unparsedAttrs) {
         let self = this;
-        let functionName = '[toBC.Request_Verify_Invoice(unparsedAttrs)]';
+        let functionName = '[toBC.Request_Verify(unparsedAttrs)]';
         return new Promise(async (resolve, reject) => {
             let invokeObject = {};
             var collections = ""
@@ -489,38 +507,38 @@ class toBC {
             const key = new NodeRSA();
             var DATE = day.getDate() + "-" + (day.getMonth() + 1) + "-" + day.getFullYear();
             var SALT2 = getRandomInt();
-            if(unparsedAttrs.DOC_LOAN.toUpperCase() != "PO" && unparsedAttrs.DOC_LOAN.toUpperCase() != "INVOICE"){
+            if (unparsedAttrs.DOC_LOAN.toUpperCase() != "PO" && unparsedAttrs.DOC_LOAN.toUpperCase() != "INVOICE") {
                 reject("DOC_LOAN name not found")
-            }else collections = unparsedAttrs.DOC_LOAN.toUpperCase()
+            } else collections = unparsedAttrs.DOC_LOAN.toUpperCase()
             console.log(collections)
             console.log("---------------------------------------------")
-            if(collections == "INVOICE"){
+            if (collections == "INVOICE") {
                 try {
-                    var BORROW = await db.DBread(unparsedAttrs.BANK.toLowerCase() || reject("BANK name not found"), `BORROW_${collections}`, `BORROW_${collections}_BODY|`+unparsedAttrs.BORROWKEY)
-                    console.log(BORROW)
+                    var LOAN = await db.DBread(unparsedAttrs.BANK.toLowerCase() || reject("BANK name not found"), `LOAN_${collections}`, `LOAN_${collections}_BODY|` + unparsedAttrs.LOAN_KEY)
+                    console.log(LOAN)
                 } catch (error) {
-                    reject("Borrow information not available")
+                    reject("LOAN information not available")
                 }
                 try {
-                        var INVOICE = await db.DBread(unparsedAttrs.BANK.toLowerCase() || reject("BANK name not found"), collections, `${collections}_BODY|`+BORROW.INVOICE_KEY)             
-                        console.log("INVOCE"+INVOICE)
+                    var INVOICE = await db.DBread(unparsedAttrs.BANK.toLowerCase() || reject("BANK name not found"), collections, `${collections}_BODY|` + LOAN.INVOICE_KEY)
+                    console.log("INVOCE" + INVOICE)
                 } catch (error) {
                     reject("Invoice information not available")  /// หาไม่เจอ
                 }
-                try { 
-                        var SALT = await db.DBread(unparsedAttrs.BANK.toLowerCase() || reject("BANK name not found"), "PO", "PO_SALT|"+ INVOICE.PO_KEY)
-                    } catch (error) {
+                try {
+                    var SALT = await db.DBread(unparsedAttrs.BANK.toLowerCase() || reject("BANK name not found"), "PO", "PO_SALT|" + INVOICE.PO_KEY)
+                } catch (error) {
                     reject("Salt not available")
                 }
-               
+
                 console.log(SALT)
                 ///////////////
                 var parsedAttrs = {
                     VERIFY: "Verify",
-                    BANK: unparsedAttrs.BANK.toLowerCase() || reject("BANK name not found") ,
+                    BANK: unparsedAttrs.BANK.toLowerCase() || reject("BANK name not found"),
                     TO: INVOICE.TO.toLowerCase(),
                     FORM: INVOICE.FORM.toLowerCase(),
-                    TYPE: INVOICE.TYPE, 
+                    TYPE: INVOICE.TYPE,
                     INVOICE_KEY: INVOICE.INVOICE_KEY,
                     PO_KEY: INVOICE.PO_KEY,
                     VALUE: INVOICE.VALUE,
@@ -529,34 +547,34 @@ class toBC {
                     SALT2: SALT2,  /// ของตริงใช้ SALT ใหม่ที่เจนใหม่
                     // SALT: SALT,
                 }
-            }else {
+            } else {
                 try {
-                    var BORROW = await db.DBread(unparsedAttrs.BANK.toLowerCase() || reject("BANK name not found"), `BORROW_${collections}`, `BORROW_${collections}_BODY|`+unparsedAttrs.BORROWKEY)
-                    console.log(BORROW)
+                    var LOAN = await db.DBread(unparsedAttrs.BANK.toLowerCase() || reject("BANK name not found"), `LOAN_${collections}`, `LOAN_${collections}_BODY|` + unparsedAttrs.LOAN_KEY)
+                    console.log(LOAN)
                 } catch (error) {
-                    reject("Borrow information not available")
+                    reject("LOAN information not available")
                 }
                 try {
-                        var PO = await db.DBread(unparsedAttrs.BANK.toLowerCase() || reject("BANK name not found"), collections, `${collections}_BODY|`+BORROW.PO_KEY)             
-                        console.log("PO"+PO)
-                        console.log(PO)
+                    var PO = await db.DBread(unparsedAttrs.BANK.toLowerCase() || reject("BANK name not found"), collections, `${collections}_BODY|` + LOAN.PO_KEY)
+                    console.log("PO" + PO)
+                    console.log(PO)
                 } catch (error) {
                     reject("Invoice information not available")  /// หาไม่เจอ
                 }
                 try {
-                        var SALT = await db.DBread(unparsedAttrs.BANK.toLowerCase() || reject("BANK name not found"), "PO", "PO_SALT|"+ PO.PO_KEY)
+                    var SALT = await db.DBread(unparsedAttrs.BANK.toLowerCase() || reject("BANK name not found"), "PO", "PO_SALT|" + PO.PO_KEY)
                 } catch (error) {
                     reject("Salt not available")
                 }
-               
+
                 console.log(SALT)
                 ///////////////
                 var parsedAttrs = {
                     VERIFY: "Verify",
-                    BANK: unparsedAttrs.BANK.toLowerCase() || reject("BANK name not found") ,
+                    BANK: unparsedAttrs.BANK.toLowerCase() || reject("BANK name not found"),
                     TO: PO.TO.toLowerCase(),
                     FORM: PO.FORM.toLowerCase(),
-                    TYPE: PO.TYPE, 
+                    TYPE: PO.TYPE,
                     PO_KEY: PO.PO_KEY,
                     VALUE: PO.VALUE,
                     DATE: PO.DATE,
@@ -567,7 +585,7 @@ class toBC {
             }
             console.log('parsedAttrs: ', parsedAttrs);
 
-    
+
             invokeObject = {
                 enrollID: self.enrollID,
                 fcnname: PushInBlockchain,
@@ -593,17 +611,17 @@ class toBC {
             let args = [hash, ciphertext
             ];
             console.log("-------------------------------------------");
-            console.log(args+"Testttttttttttttttttttttttttttt");
+            console.log(args + "Testttttttttttttttttttttttttttt");
             blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, args, INVOKE_ATTRIBUTES).then((result) => {
                 console.log("toBC");
                 let resultParsed = result.result.toString('utf8');
                 // db.DBwrite(unparsedAttrs.FORM, collections, hash, ciphertext)
-                // db.DBwrite(unparsedAttrs.FORM, collections, unparsedAttrs.BORROWKEY, hash)
-                if(collections == "INVOICE"){
+                // db.DBwrite(unparsedAttrs.FORM, collections, unparsedAttrs.LOAN_KEY, hash)
+                if (collections == "INVOICE") {
                     resolve({
                         message: {
-                            BORROWKEY: unparsedAttrs.BORROWKEY || reject("BORROWKEY name not found"),
-                            INVOICE : "-------------",
+                            LOAN_KEY: unparsedAttrs.LOAN_KEY || reject("LOAN_KEY name not found"),
+                            INVOICE: "-------------",
                             TO: parsedAttrs.TO.toLowerCase(),
                             FORM: parsedAttrs.FORM.toLowerCase(),
                             TYPE: parsedAttrs.TYPE,
@@ -615,11 +633,11 @@ class toBC {
                             NEWSALT: SALT2,
                         }
                     });
-                }else {
+                } else {
                     resolve({
                         message: {
-                            BORROWKEY: unparsedAttrs.BORROWKEY || reject("BORROWKEY name not found"),
-                            PO : "-------------",
+                            LOAN_KEY: unparsedAttrs.LOAN_KEY || reject("LOAN_KEY name not found"),
+                            PO: "-------------",
                             TO: parsedAttrs.TO.toLowerCase(),
                             FORM: parsedAttrs.FORM.toLowerCase(),
                             TYPE: parsedAttrs.TYPE,
@@ -631,7 +649,7 @@ class toBC {
                         }
                     });
                 }
-                
+
             }).catch((e) => { /// e เปลี่ยนเป้น err ดีๆ
                 logger.error(`${functionName}  ${e}`);
                 reject(` ${e}`);
@@ -656,45 +674,51 @@ class toBC {
                 BANK: unparsedAttrs.BANK || reject("Bank name not found"), //ไปอ่านไฟล์คอนฟิกของบริษัทเราเอง 
                 TYPE: "ENDORSE_LOAN", // API เจนเอง
                 DOC_LOAN: unparsedAttrs.DOC_LOAN.toUpperCase(),
-                KEY: unparsedAttrs.KEY || reject("INVOICE_KEY name not found"),//INVOICE
-                PRICE_BORROW: unparsedAttrs.PRICE_BORROW || reject("PRICE_BORROW name not found"),
+                LOAN_KEY: unparsedAttrs.LOAN_KEY || reject("LOAN_KEY name not found"),//INVOICE
+                PRICE_LOAN: unparsedAttrs.PRICE_LOAN || reject("PRICE_LOAN name not found"),
                 DATE: DATE,
             }
-            if(unparsedAttrs.DOC_LOAN.toUpperCase() == "INVOICE"){
+            var CHECK = ""
+            if (unparsedAttrs.DOC_LOAN.toUpperCase() == "INVOICE") {
                 try {
-                    var Invoice = await db.DBread(unparsedAttrs.BANK || reject("Bank name not found"),"INVOICE" , `INVOICE_BODY|` +unparsedAttrs.KEY || reject("KEY name not found"))
+                    var Check_Invoice = await db.DBread(unparsedAttrs.BANK || reject("Bank name not found"), "LOAN_INVOICE", `LOAN_INVOICE_BODY|` + unparsedAttrs.LOAN_KEY || reject("KEY name not found"))
+                    var Invoice = await db.DBread(unparsedAttrs.BANK || reject("Bank name not found"), "INVOICE", `INVOICE_BODY|` + Check_Invoice.INVOICE_KEY)
+                    var WORLD_KEY = unparsedAttrs.TO + "|" + Invoice.INVOICE_KEY + "|" + Invoice.PO_KEY
+                    var hash_WORLD_KEY = crypto.createHash('sha256')          //HASH FUCTION
+                        .update(WORLD_KEY)
+                        .digest('hex');
+                    var PRICE = Invoice.VALUE
+                    var checkreject = ""
+                    if (unparsedAttrs.PRICE_LOAN > PRICE) {
+                        checkreject = "reject"
+                        reject("Amount over")
+                    }
                 } catch (error) {
-                    reject("Invoice information not available")
+                    CHECK = "err"
+                    reject("Invoice or Loan information not available")
                 }
-                var WORLD_KEY = unparsedAttrs.TO+"|"+Invoice.INVOICE_KEY+"|"+Invoice.PO_KEY
-                var hash_WORLD_KEY = crypto.createHash('sha256')          //HASH FUCTION
-                    .update(WORLD_KEY)
-                    .digest('hex');
-                var PRICE = Invoice.VALUE
-                var checkreject = ""
-                if (unparsedAttrs.PRICE_BORROW > PRICE){
-                    checkreject = "reject"
-                    reject("Amount over")
-                }
-            }else {
-                console.log("*****0000000000***");
+
+            } else {
                 try {
-                    var PO = await db.DBread(unparsedAttrs.BANK || reject("Bank name not found"),"PO" , `PO_BODY|` +unparsedAttrs.KEY || reject("KEY name not found"))
+                    var Check_PO = await db.DBread(unparsedAttrs.BANK || reject("Bank name not found"), "LOAN_PO", `LOAN_PO_BODY|` + unparsedAttrs.LOAN_KEY || reject("KEY name not found"))
+                    var PO = await db.DBread(unparsedAttrs.BANK || reject("Bank name not found"), "PO", `PO_BODY|` + Check_PO.PO_KEY)
+                    var WORLD_KEY = unparsedAttrs.TO + "|" + PO.PO_KEY
+                    var hash_WORLD_KEY = crypto.createHash('sha256')          //HASH FUCTION
+                        .update(WORLD_KEY)
+                        .digest('hex');
+                    var PRICE = PO.VALUE
+                    var checkreject = ""
+                    if (unparsedAttrs.PRICE_LOAN > PRICE) {
+                        checkreject = "reject"
+                        reject("Amount over")
+                    }
                 } catch (error) {
-                    reject("PO information not available")
+                    CHECK = "err"
+                    reject("PO or Loaninformation not available")
                 }
-                var WORLD_KEY = unparsedAttrs.TO+"|"+PO.PO_KEY
-                var hash_WORLD_KEY = crypto.createHash('sha256')          //HASH FUCTION
-                    .update(WORLD_KEY)
-                    .digest('hex');
-                var PRICE = PO.VALUE
-                var checkreject = ""
-                if (unparsedAttrs.PRICE_BORROW > PRICE){
-                    checkreject = "reject"
-                    reject("Amount over")
-                }
+
             }
-            
+
             invokeObject = {
                 enrollID: self.enrollID,
                 fcnname: PushInBlockchain,
@@ -704,8 +728,8 @@ class toBC {
                 fcnname: GetValue,
 
             };
-            Loan_Info = [  hash_WORLD_KEY,
-                unparsedAttrs.BANK,  
+            Loan_Info = [hash_WORLD_KEY,
+                unparsedAttrs.BANK,
             ]
             companydata = [unparsedAttrs.TO,
             unparsedAttrs.BANK,
@@ -714,13 +738,13 @@ class toBC {
             // console.log(Loan_Info);
             // console.log(companydata);
             var Check_loan = ""
-            try { 
-                Check_loan = await Get_Valua(getkey, Loan_Info)            
+            try {
+                Check_loan = await Get_Valua(getkey, Loan_Info)
             } catch (error) {
                 // console.log(error)
             }
-            if(Check_loan != ""){
-                reject("Has already been borrowed")
+            if (Check_loan != "") {
+                reject("Has already been LOAN")
             }
             console.log('ciphertext:////////// ', Check_loan);
             var Publickey = await Get_Key(getkey, companydata)  //ไป get key from world
@@ -733,20 +757,20 @@ class toBC {
             // console.log('HASH Ciphertext Complete!!! : ', hash)
             let args = [hash, ciphertext
             ];
-            if (checkreject != "reject" && !Check_loan) {
-                blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, args, INVOKE_ATTRIBUTES).then(async(result) => {
+            if (checkreject != "reject" && !Check_loan && !CHECK) {
+                blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, args, INVOKE_ATTRIBUTES).then(async (result) => {
                     let resultParsed = result.result.toString('utf8');
                     var collections = "ENDORSE_LOAN"
-                        db.DBwrite3(unparsedAttrs.BANK, collections, `${collections}_BODY|${unparsedAttrs.BANK}|` +`${unparsedAttrs.DOC_LOAN}_${unparsedAttrs.KEY}`, parsedAttrs,hash)
-                        // db.DBwrite3(unparsedAttrs.BANK, collections, `${collections}_BODY|${INFORMATION.BANK}|` +`${unparsedAttrs.DOC_LOAN}_${unparsedAttrs.KEY}`, parsedAttrs,hash)
+                    db.DBwrite3(unparsedAttrs.BANK, collections, `${collections}_BODY|${unparsedAttrs.BANK}|` + `${unparsedAttrs.DOC_LOAN}_${unparsedAttrs.LOAN_KEY}`, parsedAttrs, hash)
+                    // db.DBwrite3(unparsedAttrs.BANK, collections, `${collections}_BODY|${INFORMATION.BANK}|` +`${unparsedAttrs.DOC_LOAN}_${unparsedAttrs.KEY}`, parsedAttrs,hash)
 
                     resolve({
                         message: {
                             TO: parsedAttrs.TO,
                             BANK: parsedAttrs.BANK,
                             TYPE: parsedAttrs.TYPE,
-                            KEY: parsedAttrs.KEY,
-                            PRICE_BORROW: parsedAttrs.PRICE_BORROW,
+                            LOAN_KEY: parsedAttrs.LOAN_KEY,
+                            PRICE_LOAN: parsedAttrs.PRICE_LOAN,
                             DATE: parsedAttrs.DATE,
                         }
                     });
@@ -755,7 +779,7 @@ class toBC {
                     reject(` ${e}`);
                 });
             }
-            
+
         })
 
     }
@@ -763,44 +787,48 @@ class toBC {
         let self = this;
         let functionName = '[toBC.Accept(unparsedAttrs)]';
         return new Promise(async (resolve, reject) => {
-            let invokeObject = {};  
+            let invokeObject = {};
             let getkey = {};
             let companydata = {};
-            if(unparsedAttrs.DOC_LOAN == "INVOICE"){
+            if (unparsedAttrs.DOC_LOAN == "INVOICE") {
                 console.log("+++++++++++++++++++++++++++++++++++++++++");
                 console.log("INVOICE");
                 try {
-                    var Endorse_loan = await db.DBread(unparsedAttrs.FORM || reject("Company name not found"),"ENDORSE_LOAN" , `ENDORSE_LOAN_BODY|${unparsedAttrs.BANK}|${unparsedAttrs.DOC_LOAN}_${unparsedAttrs.KEY}`)
+                    var Endorse_loan = await db.DBread(unparsedAttrs.FORM || reject("Company name not found"), "ENDORSE_LOAN", `ENDORSE_LOAN_BODY|${unparsedAttrs.BANK}|${unparsedAttrs.DOC_LOAN}_${unparsedAttrs.LOAN_KEY}`)
+                    var LOAN_INVOICE = await db.DBread(unparsedAttrs.FORM || reject("Bank name not found"), "LOAN_INVOICE", `LOAN_INVOICE_BODY|` + unparsedAttrs.LOAN_KEY || reject("LOAN_KEY name not found"))
                 } catch (error) {
                     reject("Endorse_loan information not available")
                 }
+
                 try {
-                    var Invoice = await db.DBread(unparsedAttrs.FORM || reject("Company name not found"),"INVOICE" , `INVOICE_BODY|` +unparsedAttrs.KEY || reject("KEY not found"))
+                    var Invoice = LOAN_INVOICE.INVOICE
                 } catch (error) {
                     reject("Invoice information not available")
                 }
                 try {
-                    var PO = await db.DBread(unparsedAttrs.FORM || reject("Company name not found"),"PO" , `PO_BODY|` +Invoice.PO_KEY || reject("POKEY not found"))
+                    var PO = await db.DBread(unparsedAttrs.FORM || reject("Company name not found"), "PO", `PO_BODY|` + Invoice.PO_KEY || reject("POKEY not found"))
                 } catch (error) {
                     reject("Invoice information not available")
                 }
-                var WORLD_KEY = unparsedAttrs.FORM+"|"+Invoice.INVOICE_KEY+"|"+Invoice.PO_KEY
+                var WORLD_KEY = unparsedAttrs.FORM + "|" + Invoice.INVOICE_KEY + "|" + Invoice.PO_KEY
                 console.log(WORLD_KEY);
-            }else {
+            } else {
                 try {
-                    var Endorse_loan = await db.DBread(unparsedAttrs.FORM || reject("Company name not found"),"ENDORSE_LOAN" , `ENDORSE_LOAN_BODY|${unparsedAttrs.BANK}|${unparsedAttrs.DOC_LOAN}_${unparsedAttrs.KEY}`)
+                    console.log("---------------------------------");
+                    var Endorse_loan = await db.DBread(unparsedAttrs.FORM || reject("Company name not found"), "ENDORSE_LOAN", `ENDORSE_LOAN_BODY|${unparsedAttrs.BANK}|${unparsedAttrs.DOC_LOAN}_${unparsedAttrs.LOAN_KEY}`)
+                    var LOAN_PO = await db.DBread(unparsedAttrs.FORM || reject("Bank name not found"), "LOAN_PO", `LOAN_PO_BODY|` + unparsedAttrs.LOAN_KEY || reject("LOAN_KEY name not found"))
                 } catch (error) {
                     reject("Endorse_loan information not available")
                 }
                 try {
-                    var PO = await db.DBread(unparsedAttrs.FORM || reject("Company name not found"),"PO" , `PO_BODY|` +unparsedAttrs.KEY || reject("KEY not found"))
+                    var PO = LOAN_PO.PO
                 } catch (error) {
-                    reject("Invoice information not available")
+                    reject("PO information not available")
                 }
-                var WORLD_KEY = unparsedAttrs.FORM+"|"+PO.PO_KEY
+                var WORLD_KEY = unparsedAttrs.FORM + "|" + PO.PO_KEY
                 console.log(WORLD_KEY);
             }
-           
+
             invokeObject = {
                 enrollID: self.enrollID,
                 fcnname: PushInBlockchain,
@@ -823,10 +851,10 @@ class toBC {
             var hash = crypto.createHash('sha256')          //HASH FUCTION
                 .update(WORLD_KEY)
                 .digest('hex');
-            // console.log('HASH Ciphertext Complete!!! : ', hash)
+            console.log('HASH Ciphertext Complete!!! : ', hash)
             let args = [hash, ciphertext
             ];
-            blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, args, INVOKE_ATTRIBUTES).then(async(result) => {
+            blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, args, INVOKE_ATTRIBUTES).then(async (result) => {
                 let resultParsed = result.result.toString('utf8');
                 resolve({
                     message: {
@@ -846,18 +874,18 @@ class toBC {
         let self = this;
         let functionName = '[toBC.AutoPushInBlockchain(unparsedAttrs)]';
         return new Promise(async (resolve, reject) => {
-            let invokeObject = {};  
+            let invokeObject = {};
             let getkey = {};
             let companydata = {};
             var DATE = day.getDate() + "-" + (day.getMonth() + 1) + "-" + day.getFullYear();
             var parsedAttrs = {
-                BANK: unparsedAttrs.BANK ,
-                FORM: unparsedAttrs.FORM , //ไปอ่านไฟล์คอนฟิกของบริษัทเราเอง 
+                BANK: unparsedAttrs.BANK,
+                FORM: unparsedAttrs.FORM, //ไปอ่านไฟล์คอนฟิกของบริษัทเราเอง 
                 TYPE: "Auto Verify",
                 DATE: DATE,
-                PO: unparsedAttrs.PO ,
-                SALT: unparsedAttrs.SALT ,
-                SALT2: unparsedAttrs.SALT2 ,
+                PO: unparsedAttrs.PO,
+                SALT: unparsedAttrs.SALT,
+                SALT2: unparsedAttrs.SALT2,
             }
             invokeObject = {
                 enrollID: self.enrollID,
@@ -885,7 +913,7 @@ class toBC {
             // console.log('HASH Ciphertext Complete!!! : ', hash)
             let args = [hash, ciphertext
             ];
-            blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, args, INVOKE_ATTRIBUTES).then(async(result) => {
+            blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, args, INVOKE_ATTRIBUTES).then(async (result) => {
                 let resultParsed = result.result.toString('utf8');
                 resolve({
                     message: {
@@ -1097,19 +1125,47 @@ class toBC {
     GetValue(unparsedAttrs) {
         let self = this;
         let functionName = '[toBC.GetValue(unparsedAttrs)]';
-        return new Promise(async(resolve, reject) => {
-            
+        return new Promise(async (resolve, reject) => {
+
             console.log(unparsedAttrs.COMPANY)
             console.log(unparsedAttrs.TYPE)
-            console.log(`${unparsedAttrs.TYPE}_BODY`+unparsedAttrs.KEY)
-            var  VALUE = await db.DBread(unparsedAttrs.COMPANY, unparsedAttrs.TYPE,`${unparsedAttrs.TYPE}_BODY|`+unparsedAttrs.KEY )
+            console.log(`${unparsedAttrs.TYPE}_BODY` + unparsedAttrs.KEY)
+            var VALUE = await db.DBread(unparsedAttrs.COMPANY, unparsedAttrs.TYPE, `${unparsedAttrs.TYPE}_BODY|` + unparsedAttrs.KEY)
             console.log(VALUE);
             console.log("----------------------------------------");
             resolve({
-                message: { 
+                message: {
                     INFO: VALUE,
                 }
             });
+        });
+    }
+    Get_Blockchain(unparsedAttrs) {
+        let self = this;
+        let functionName = '[toBC.Get_Blockchain(unparsedAttrs)]';
+        var getkey = {}
+        var companydata = {}
+        return new Promise(async (resolve, reject) => {
+            getkey = {
+                enrollID: self.enrollID,
+                fcnname: GetValue,
+
+            };
+            companydata = [unparsedAttrs.KEY,
+            unparsedAttrs.USER.toLowerCase(),
+            ]
+            console.log(getkey)
+            console.log(companydata)
+            var VALUE = await Get_Valua(getkey, companydata)
+            console.log(VALUE)
+            resolve({
+                message: {
+                    INFO: VALUE,
+                }
+            });
+        }).catch((e) => {
+            logger.error(`${functionName}  ${e}`);
+            reject(` ${e}`);
         });
     }
     /**
@@ -1119,68 +1175,68 @@ class toBC {
 * @param {Object}req - CompanyInfo{Name,Role,ID}
 * @param {Object}res - KeyPair of each Company
 */
-GenerateKeyPair(CompanyInfo) {      //ทำตัวเก็บคีย์แพร์ พร้อมกับ check
-    var self = this;
-    let functionName = '[toBC.GenerateKeyPair(CompanyInfo)]';
-    logger.debug(self.enrollID);
-    console.log(self.enrollID);
-    return new Promise((resolve, reject) => {
+    GenerateKeyPair(CompanyInfo) {      //ทำตัวเก็บคีย์แพร์ พร้อมกับ check
+        var self = this;
+        let functionName = '[toBC.GenerateKeyPair(CompanyInfo)]';
+        logger.debug(self.enrollID);
+        console.log(self.enrollID);
+        return new Promise((resolve, reject) => {
 
-        let infokey = keypair.generatekeypair(CompanyInfo.Name.toLowerCase())
-        var WorldState_key = (CompanyInfo.Name.toLowerCase())
-        // var WorldState_key = (CompanyInfo.ID + "|" + CompanyInfo.Role)
-        // var Companyname = (CompanyInfo.Name)
-        console.log('Add local db');
-        // เอาไปใส่ในดาต้าเบสด้วย
-        console.log('Add world state : ' + WorldState_key);
-
-
-        let invokeObject = {};
-        ParseKeyStore(WorldState_key, infokey.Public_key).then((parsedAttrs) => {
-            invokeObject = {
-                enrollID: self.enrollID,
-                fcnname: StoreKey,
-                attrs: parsedAttrs
-            };
-            console.log('parsedAttrs:' + parsedAttrs);
-
-            //ทำเป็น  อซิง ไปถาม พีช
-            blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, invokeObject.attrs, INVOKE_ATTRIBUTES).then((result) => {
-                // let resultParsed = JSON.parse(result.result.toString('utf8'));
-                // let resultParsed = result.result.toString('utf8');
-                
-                //DATABASE for admin
-                db.AdminDBwrite(CompanyInfo.Name,infokey.Public_key,infokey.Private_key)
-
-                // db.AdminDBwrite(CompanyInfo.Name, infokey.Public_key, infokey.Private_key)
-
-                //DATABASE for USER
-                db.AdminForCom(CompanyInfo.Name, infokey.Public_key,infokey.Private_key)
-                
-                resolve({
-                    message: {
-                        CompanyName: CompanyInfo.Name,
-                        WorldState_Key: WorldState_key,
-                        Public_Key: infokey.Public_key,
-                        Private_Key: infokey.Privatekey
+            let infokey = keypair.generatekeypair(CompanyInfo.Name.toLowerCase())
+            var WorldState_key = (CompanyInfo.Name.toLowerCase())
+            // var WorldState_key = (CompanyInfo.ID + "|" + CompanyInfo.Role)
+            // var Companyname = (CompanyInfo.Name)
+            console.log('Add local db');
+            // เอาไปใส่ในดาต้าเบสด้วย
+            console.log('Add world state : ' + WorldState_key);
 
 
-                    }
+            let invokeObject = {};
+            ParseKeyStore(WorldState_key, infokey.Public_key).then((parsedAttrs) => {
+                invokeObject = {
+                    enrollID: self.enrollID,
+                    fcnname: StoreKey,
+                    attrs: parsedAttrs
+                };
+                console.log('parsedAttrs:' + parsedAttrs);
+
+                //ทำเป็น  อซิง ไปถาม พีช
+                blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, invokeObject.attrs, INVOKE_ATTRIBUTES).then((result) => {
+                    // let resultParsed = JSON.parse(result.result.toString('utf8'));
+                    // let resultParsed = result.result.toString('utf8');
+
+                    //DATABASE for admin
+                    db.AdminDBwrite(CompanyInfo.Name, infokey.Public_key, infokey.Private_key)
+
+                    // db.AdminDBwrite(CompanyInfo.Name, infokey.Public_key, infokey.Private_key)
+
+                    //DATABASE for USER
+                    db.AdminForCom(CompanyInfo.Name, infokey.Public_key, infokey.Private_key)
+
+                    resolve({
+                        message: {
+                            CompanyName: CompanyInfo.Name,
+                            WorldState_Key: WorldState_key,
+                            Public_Key: infokey.Public_key,
+                            Private_Key: infokey.Privatekey
+
+
+                        }
+                    });
+                }).catch((e) => {
+                    logger.error(`${functionName}  ${e}`);
+                    reject(` ${e}`);
                 });
-            }).catch((e) => {
-                logger.error(`${functionName}  ${e}`);
-                reject(` ${e}`);
-            });
 
 
+
+            })
 
         })
 
-    })
 
 
-
-}
+    }
 }
 module.exports = toBC;
 
@@ -1367,7 +1423,7 @@ module.exports = toBC;
 //             var CheckPO ="don'have yet"
 //             try {
 //                 CheckPO = await db.DBread(unparsedAttrs.FORM, collections, unparsedAttrs.KEY)
-                
+
 //             } catch (error) {
 //                 // console.log(error)
 //             }
@@ -1380,7 +1436,7 @@ module.exports = toBC;
 //                     console.log(resultParsed)  //// ติดปัญหาแกะตัวอักษรไม่ได้
 //                     console.log("++-+--+-+-+-+--+-+-+-+-+-+--+-+-+-")
 //                     console.log(ciphertext);
-                    
+
 //                     console.log(unparsedAttrs.FORM);
 //                     var My_publckey = await db.DBreadPublic(unparsedAttrs.FORM,"CompanyData" , unparsedAttrs.FORM)
 //                     key.importKey(My_publckey, 'pkcs1-public-pem');
@@ -1390,11 +1446,11 @@ module.exports = toBC;
 //                     .digest('hex');
 //                     db.DBwrite(unparsedAttrs.FORM, collections, My_hash, MY_ciphertext)
 //                     db.DBwrite(unparsedAttrs.FORM, collections, unparsedAttrs.KEY, My_hash)
-    
+
 //                     ////////////
 //                     // db.DBwrite(unparsedAttrs.TO, collections, hash, ciphertext)        /// ให้แก้ไปเก็บลงในต้าเบสของคนที่เราจะส่งให้
 //                     // db.DBwrite(unparsedAttrs.TO, collections, unparsedAttrs.KEY, hash) /// ทาง event hub
-    
+
 //                     // MongoClient.connect(url, function (err, db) { //connect DB url
 //                     //     if (err) throw err;
 //                     //     var dbo = db.db("PO");
@@ -1411,7 +1467,7 @@ module.exports = toBC;
 //                     //         });
 //                     //     });
 //                     // })
-    
+
 //                     resolve({
 //                         message: {
 //                             TO: parsedAttrs.TO,
@@ -1429,7 +1485,7 @@ module.exports = toBC;
 //             }else {
 //                 reject("Already have  PO")
 //             }
-            
+
 //         })
 
 //     }
@@ -1463,7 +1519,7 @@ module.exports = toBC;
 //             } catch (error) {
 //                 reject("PO not available")
 //             }
-            
+
 //             // var COMPANY = unparsedAttrs.COMPANY
 //             invokeObject = {
 //                 enrollID: self.enrollID,
@@ -1492,7 +1548,7 @@ module.exports = toBC;
 //             var CheckInvoice ="don'have yet"
 //             try {
 //                 CheckInvoice = await db.DBread(unparsedAttrs.FORM, collections, unparsedAttrs.KEY)
-                
+
 //             } catch (error) {
 //                 // console.log(error)
 //             }
@@ -1513,7 +1569,7 @@ module.exports = toBC;
 //                     ////////////
 //                     // db.DBwrite(unparsedAttrs.TO, collections, hash, ciphertext)        /// ให้แก้ไปเก็บลงในต้าเบสของคนที่เราจะส่งให้
 //                     // db.DBwrite(unparsedAttrs.TO, collections, unparsedAttrs.KEY, hash) /// ทาง event hub
-    
+
 //                     resolve({
 //                         message: {
 //                             TO: parsedAttrs.TO,
@@ -1531,15 +1587,15 @@ module.exports = toBC;
 //             }else {
 //                 reject(" Already have  Invoice")
 //             }
-            
+
 //         })
 //     }
 
-//     BorrowInvoice(unparsedAttrs) {
+//     LOANInvoice(unparsedAttrs) {
 //         let self = this;
-//         let functionName = '[toBC.BorrowInvoice(unparsedAttrs)]';
+//         let functionName = '[toBC.LOANInvoice(unparsedAttrs)]';
 //         return new Promise(async (resolve, reject) => {
-            
+
 //             let invokeObject = {};
 //             let getkey = {};
 //             let companydata = [];
@@ -1567,8 +1623,8 @@ module.exports = toBC;
 //             var parsedAttrs = {
 //                 BANK: unparsedAttrs.BANK || reject("Company name not found"),
 //                 FORM: unparsedAttrs.FORM || reject("FORM name not found"), //ไปอ่านไฟล์คอนฟิกของบริษัทเราเอง 
-//                 TYPE: "BORROW_INVOICE", // API เจนเอง
-//                 BORROWKEY: unparsedAttrs.BORROWKEY || reject("BORROWKEY name not found"),
+//                 TYPE: "LOAN_INVOICE", // API เจนเอง
+//                 LOAN_KEY: unparsedAttrs.LOAN_KEY || reject("LOAN_KEY name not found"),
 //                 PO_ID: decrypted.POKEY,
 //                 INVOICE_ID: unparsedAttrs.INVOICE_ID || reject("KEY name not found"),
 //                 DATE: DATE,
@@ -1600,18 +1656,18 @@ module.exports = toBC;
 //             ];
 //             // console.log("-------------------------------------------");
 //             // console.log(args+"Testttttttttttttttttttttttttttt");
-//             var collections = "BORROW_INVOICE"
+//             var collections = "LOAN_INVOICE"
 //             // var CheckInvoice ="don'have yet"
 //             // try {
 //             //     CheckInvoice = await db.DBread(unparsedAttrs.FORM, collections, unparsedAttrs.KEY)
-                
+
 //             // } catch (error) {
 //             //     // console.log(error)
 //             // }
 //             // if(CheckInvoice == "don'have yet"){
 
 //             // }else {
-                
+
 //             // }
 //             blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, args, INVOKE_ATTRIBUTES).then(async(result) => {
 //                 console.log("toBC");
@@ -1622,7 +1678,7 @@ module.exports = toBC;
 //                 console.log(ciphertext);
 //                 var collectionsInvoice = "INVOICE"
 //                 db.DBwrite(unparsedAttrs.FORM, collections, hash, ciphertext)
-//                 db.DBwrite(unparsedAttrs.FORM, collections, unparsedAttrs.BORROWKEY, hash)
+//                 db.DBwrite(unparsedAttrs.FORM, collections, unparsedAttrs.LOAN_KEY, hash)
 //                 resolve({
 //                     message: {
 //                         BANK: parsedAttrs.BANK,
@@ -1653,9 +1709,9 @@ module.exports = toBC;
 //             let companydata = [];
 //             var DATE = day.getDate() + "-" + (day.getMonth() + 1) + "-" + day.getFullYear();
 //             var SALT = getRandomInt();
-//             var collections = "BORROW_INVOICE"
+//             var collections = "LOAN_INVOICE"
 //             console.log("testttttttttttttttttttt");
-//             var hash = await db.DBread(unparsedAttrs.BANK, collections, unparsedAttrs.BORROWKEY)
+//             var hash = await db.DBread(unparsedAttrs.BANK, collections, unparsedAttrs.LOAN_KEY)
 //             console.log("testttttttttttttttttttt");
 //             var encrypt = await db.DBread(unparsedAttrs.BANK, collections, hash)
 //             ///////////
@@ -1695,7 +1751,7 @@ module.exports = toBC;
 //             }
 //             console.log('parsedAttrs: ', parsedAttrs);
 
-    
+
 //             invokeObject = {
 //                 enrollID: self.enrollID,
 //                 fcnname: PushInBlockchain,
@@ -1729,15 +1785,15 @@ module.exports = toBC;
 //                 console.log(resultParsed)
 //                 console.log("++-+--+-+-+-+--+-+-+-+-+-+--+-+-+-")
 //                 console.log(ciphertext);
-//                 // var collections = "BORROW_INVOICE"
+//                 // var collections = "LOAN_INVOICE"
 //                 // db.DBwrite(unparsedAttrs.FORM, collections, hash, ciphertext)
-//                 // db.DBwrite(unparsedAttrs.FORM, collections, unparsedAttrs.BORROWKEY, hash)
+//                 // db.DBwrite(unparsedAttrs.FORM, collections, unparsedAttrs.LOAN_KEY, hash)
 //                 // ////////////
 //                 // db.DBwrite(unparsedAttrs.TO, collections, hash, ciphertext)        /// ให้แก้ไปเก็บลงในต้าเบสของคนที่เราจะส่งให้
-//                 // db.DBwrite(unparsedAttrs.TO, collections, unparsedAttrs.BORROWKEY, hash) /// ทาง event hub
+//                 // db.DBwrite(unparsedAttrs.TO, collections, unparsedAttrs.LOAN_KEY, hash) /// ทาง event hub
 //                 resolve({
 //                     message: {
-//                         BORROWKEY: unparsedAttrs.BORROWKEY,
+//                         LOAN_KEY: unparsedAttrs.LOAN_KEY,
 //                         INVOICE : "-------------",
 //                         TO: parsedAttrs.TO,
 //                         FORM: parsedAttrs.FORM,
@@ -1774,7 +1830,7 @@ module.exports = toBC;
 //                 BANK: unparsedAttrs.BANK || reject("Bank name not found"), //ไปอ่านไฟล์คอนฟิกของบริษัทเราเอง 
 //                 TYPE: "ENDORSE_LOAN", // API เจนเอง
 //                 KEY: unparsedAttrs.KEY || reject("KEY name not found"),
-//                 PRICE_BORROW: unparsedAttrs.PRICE_BORROW || reject("PRICE_BORROW name not found"),
+//                 PRICE_LOAN: unparsedAttrs.PRICE_LOAN || reject("PRICE_LOAN name not found"),
 //                 DATE: DATE,
 //             }
 //             var Invoicecrypt = await db.DBread(unparsedAttrs.BANK,"INVOICE" , unparsedAttrs.KEY)
@@ -1785,7 +1841,7 @@ module.exports = toBC;
 //             var PRICE = JSON.parse(InvoiceInfo).VALUE
 //             console.log('PRICE: ', PRICE);
 //             var checkreject = ""
-//             if (unparsedAttrs.PRICE_BORROW > PRICE){
+//             if (unparsedAttrs.PRICE_LOAN > PRICE){
 //                 checkreject = "reject"
 //                 reject("Amount over")
 //             }
@@ -1831,20 +1887,20 @@ module.exports = toBC;
 //                     var My_hash = crypto.createHash('sha256')          //HASH FUCTION
 //                     .update(MY_ciphertext)
 //                     .digest('hex');
-                    
+
 //                         db.DBwrite(unparsedAttrs.BANK, collections, My_hash, MY_ciphertext)
 //                         db.DBwrite(unparsedAttrs.BANK, collections, unparsedAttrs.KEY, My_hash)
-                    
-                    
-                    
-                    
+
+
+
+
 //                     resolve({
 //                         message: {
 //                             TO: parsedAttrs.TO,
 //                             BANK: parsedAttrs.BANK,
 //                             TYPE: parsedAttrs.TYPE,
 //                             KEY: parsedAttrs.KEY,
-//                             PRICE_BORROW: parsedAttrs.PRICE_BORROW,
+//                             PRICE_LOAN: parsedAttrs.PRICE_LOAN,
 //                             DATE: parsedAttrs.DATE,
 //                         }
 //                     });
@@ -1853,7 +1909,7 @@ module.exports = toBC;
 //                     reject(` ${e}`);
 //                 });
 //             }
-            
+
 //         })
 
 //     }
@@ -2142,7 +2198,7 @@ module.exports = toBC;
 //             blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, invokeObject.attrs, INVOKE_ATTRIBUTES).then((result) => {
 //                 // let resultParsed = JSON.parse(result.result.toString('utf8'));
 //                 // let resultParsed = result.result.toString('utf8');
-                
+
 //                 //DATABASE for admin
 //                 db.AdminDBwrite(CompanyInfo.Name,infokey.Public_key,infokey.Private_key)
 
@@ -2150,7 +2206,7 @@ module.exports = toBC;
 
 //                 //DATABASE for USER
 //                 db.AdminForCom(CompanyInfo.Name, infokey.Public_key,infokey.Private_key)
-                
+
 //                 resolve({
 //                     message: {
 //                         CompanyName: CompanyInfo.Name,

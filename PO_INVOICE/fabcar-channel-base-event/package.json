@@ -9,15 +9,16 @@
         "lotus": "CONFIG_ORG=lotus.json PORT=7002   node server.js ",
         "themall": "CONFIG_ORG=themall.json  PORT=7003   node server.js",
         "bank": "CONFIG_ORG=bank.json  PORT=7004   node server.js",
-        "eventlotus" : "CONFIG_ORG=lotus.json node ./blockchain/deployLocal/lotus/channel-lotus.js",
-        "eventthemall" : "CONFIG_ORG=themall.json node ./blockchain/deployLocal/themall/channel-themall.js",
-        "eventbank" : "CONFIG_ORG=bank.json node ./blockchain/deployLocal/bank/channel-bank.js"
+        "eventlotus": "CONFIG_ORG=lotus.json node ./blockchain/deployLocal/lotus/channel-lotus.js",
+        "eventthemall": "CONFIG_ORG=themall.json node ./blockchain/deployLocal/themall/channel-themall.js",
+        "eventbank": "CONFIG_ORG=bank.json node ./blockchain/deployLocal/bank/channel-bank.js"
     },
     "dependencies": {
         "@grpc/proto-loader": "^0.3.0",
+        "cors": "^2.8.5",
         "express": "^4.16.4",
         "fabric-ca-client": "~1.3.0",
-        "fabric-client": "~1.3.0",
+        "fabric-client": "^1.4.1",
         "grpc": "^1.6.0",
         "mongodb": "^3.2.3",
         "morgan": "^1.9.1",

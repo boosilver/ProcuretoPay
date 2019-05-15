@@ -47,7 +47,7 @@ var data ;
  if (!db) console.log ('error to connect database server ')
     var dbo = db.db(company);
     result = await dbo.collection(collections).findOne({_id: key})
-    if (!result) console.log ('data not found ')
+    if (!result) console.log (' ')
          //console.log(result.name);
           data = result.value
           db.close();
@@ -61,7 +61,8 @@ async function DBreadHash(company,collections,key){
    if (!db) console.log ('error to connect database server ')
       var dbo = db.db(company);
       result = await dbo.collection(collections).findOne({_id: key})
-      if (!result) console.log ('data not found ')
+      if (!result) console.log (' ')
+      // console.log ('data not found ')
            //console.log(result.name);
             data = result.hash
             db.close();
@@ -115,7 +116,11 @@ function AdminForCom(DB,publickey,privatekey){
         db.close();
       });
     });
-    dbo.createCollection("BORROW_INVOICE", function(err, res) {
+    dbo.createCollection("LOAN_INVOICE", function(err, res) {
+      if (err) throw err;
+      db.close();
+    });
+    dbo.createCollection("LOAN_PO", function(err, res) {
       if (err) throw err;
       db.close();
     });

@@ -18,7 +18,7 @@ type USER_INFORMATION struct {
 	SHOW_HISTORY []string
 }
 type PO_INFORMATION struct {
-	VALUE string `json:"VALUE"` ///json คือคีย์ที่ใช้เวลาส่งไปที่อื่นต่อ
+	VALUE string `json:"VALUE"`  ///json คือคีย์ที่ใช้เวลาส่งไปที่อื่นต่อ
 	KEY   string `json:"KEY"`
 }
 type INVOICE_INFORMATION struct {
@@ -27,13 +27,13 @@ type INVOICE_INFORMATION struct {
 }
 type STORE_KEY struct {
 	COMPANYNAME string `json:"COMPANYNAME"`
-	PUBLIC_KEY  string `json:"PUBLIC_KEY"`
+	PUBLIC_KEY     string `json:"PUBLIC_KEY"`
 }
 
-var line = ("-----------------------------------------------------------------------------")
+var line = ("-------------------------------------------------------------------------------")
 var linePO = ("----------------------------   PURCHASE ORDER   -----------------------------")
 var lineIvoice = ("----------------------------   INVOICE   ------------------------------------")
-var lineGenkey = ("----------------------------   GEN USER KEY  --------------------------------")
+var linepush = ("----------------------------   PUSH IN BLOCKCHAIN   ------------------------------------")
 
 func (t *FundTransferChaincode) Init(stub shim.ChaincodeStubInterface) pb.Response {
 	return shim.Success(nil)
@@ -51,6 +51,17 @@ func (t *FundTransferChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Resp
 	} else if function == "PushInBlockchain" {
 		return t.PushInBlockchain(stub, args)
 	}
+	// } else if function == "CheckPO" {
+	// 	return t.CheckPO(stub, args)
+	// } else if function == "CheckInvoice" {
+	// 	return t.CheckINVOICE(stub, args)
+	// } else if function == "Borrow_Invoice_Seller" {
+	// 	return t.Borrow_Invoice_Seller(stub, args)
+	// } else if function == "Borrow_Invoice_Buyer" {
+	// 	return t.Borrow_Invoice_Buyer(stub, args)
+	// } else if function == "BorrowPO" {
+	// 	return t.BorrowPO(stub, args)
+	// }
 	return shim.Error("Invalid invoke function name. ")
 }
 
@@ -111,8 +122,8 @@ func (t *FundTransferChaincode) CreateInvoice(stub shim.ChaincodeStubInterface, 
 	if len(args) != 2 {
 		return shim.Error("Incorrect number of arguments  ")
 	}
-	KEY = args[0]
-	VALUE = args[1]                               ///
+	KEY = args[0]   
+	VALUE = args[1]                              ///
 	CHEACK_INVOICE_KEY, err := stub.GetState(KEY) /// ของจริงใช้ แฮดแทน
 	if err != nil {
 		fmt.Println(err)
@@ -146,7 +157,6 @@ func (t *FundTransferChaincode) CreateInvoice(stub shim.ChaincodeStubInterface, 
 	///////////////////////////// History
 	return shim.Success(INVOICE_MARSHAL)
 }
-
 //#############################################################################
 //############################### BANK #######################################
 //#############################################################################
@@ -156,17 +166,19 @@ func (t *FundTransferChaincode) PushInBlockchain(stub shim.ChaincodeStubInterfac
 	if len(args) != 2 {
 		return shim.Error("Incorrect number of arguments  ")
 	}
-	KEY = args[0]
-	VALUE = args[1]                               ///
-	CHEACK_INVOICE_KEY, err := stub.GetState(KEY) /// ของจริงใช้ แฮดแทน
+	KEY = args[0]   
+	VALUE = args[1]                              ///
+	CHEACK_INVOICE_KEY, err := stub.GetState(KEY) 
+	fmt.Println(linepush)
+	fmt.Println(CHEACK_INVOICE_KEY)
 	if err != nil {
 		fmt.Println(err)
 		return shim.Error("Failed to get state1")
 	}
 	if CHEACK_INVOICE_KEY != nil {
-		return shim.Error("this invoice number has already been used ") //////เช็คว่ามีอินวอยใบนี้หรือยัง ซ้ำไหม
+		return shim.Error("This already been used ") 
 	}
-	var INVOICE_INFORMATION = INVOICE_INFORMATION{ ///เก็บค่าลง invoice
+	var INVOICE_INFORMATION = INVOICE_INFORMATION{ 
 		KEY:   KEY,
 		VALUE: VALUE,
 	}
@@ -183,7 +195,7 @@ func (t *FundTransferChaincode) PushInBlockchain(stub shim.ChaincodeStubInterfac
 		fmt.Print("err")
 		return shim.Error("can't put stub ")
 	}
-	fmt.Println(lineIvoice)
+	fmt.Println(linepush)
 	fmt.Println("VALUE = " + VALUE + "\n" + "KEY = " + KEY)
 	fmt.Println(line)
 	Payload := []byte(INVOICE_MARSHAL)
@@ -191,7 +203,6 @@ func (t *FundTransferChaincode) PushInBlockchain(stub shim.ChaincodeStubInterfac
 	///////////////////////////// History
 	return shim.Success(INVOICE_MARSHAL)
 }
-
 //#############################################################################
 //############################### GET #######################################
 //#############################################################################
@@ -199,6 +210,7 @@ func (t *FundTransferChaincode) GetValue(stub shim.ChaincodeStubInterface, args 
 	var ID string
 	var USER string
 	var err error
+	fmt.Println("CC ----------------getvalue-----------------------")
 	if len(args) != 2 {
 		return shim.Error("Incorrect number of arguments  ")
 	}
@@ -240,7 +252,7 @@ func (t *FundTransferChaincode) StoreKey(stub shim.ChaincodeStubInterface, args 
 
 	STORE_KEY_DATA := STORE_KEY{
 		COMPANYNAME: COMPANYNAME,
-		PUBLIC_KEY:  PUBLIC_KEY,
+		PUBLIC_KEY:     PUBLIC_KEY,
 	}
 	STORE_KEY_MARSHAL, err := json.Marshal(STORE_KEY_DATA) //make byte arrays
 	if err != nil {
@@ -260,9 +272,6 @@ func (t *FundTransferChaincode) StoreKey(stub shim.ChaincodeStubInterface, args 
 	// Payload := []byte(STORE_KEY_MARSHAL)
 	// stub.SetEvent("event", Payload)
 	////////////// History
-	fmt.Println(lineGenkey)
-	fmt.Println("Company =  " + COMPANYNAME + "\n" + "Public Key = " + PUBLIC_KEY)
-	fmt.Println(line)
 	return shim.Success(STORE_KEY_MARSHAL)
 }
 func main() {

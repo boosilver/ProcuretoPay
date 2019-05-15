@@ -126,8 +126,8 @@ Fabric_Client.newDefaultKeyValueStore({
                                 BANK: INFORMATION.BANK,
                                 TYPE: INFORMATION.TYPE,
                                 DOC_LOAN: INFORMATION.DOC_LOAN,
-                                KEY: INFORMATION.KEY,
-                                PRICE_BORROW: INFORMATION.PRICE_BORROW,
+                                LOAN_KEY: INFORMATION.LOAN_KEY,
+                                PRICE_LOAN: INFORMATION.PRICE_LOAN,
                                 DATE: INFORMATION.DATE,
                             }
                         }
@@ -214,12 +214,12 @@ Fabric_Client.newDefaultKeyValueStore({
                             } else if (INFORMATION.TYPE == "ENDORSE_LOAN") {
                                 var Check_Endorse = ""
                                 try {
-                                    Check_Endorse = await db.DBread(INFORMATION.TO, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|${INFORMATION.BANK}|` + `${INFORMATION.DOC_LOAN}_${INFORMATION.KEY}`)
+                                    Check_Endorse = await db.DBread(INFORMATION.TO, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|${INFORMATION.BANK}|` + `${INFORMATION.DOC_LOAN}_${INFORMATION.LOAN_KEY}`)
                                 } catch (error) {
                                     // console.log(error)
                                 }
                                 if (!Check_Endorse) {
-                                    await db.DBwrite3(INFORMATION.TO, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|${INFORMATION.BANK}|` + `${INFORMATION.DOC_LOAN}_${INFORMATION.KEY}`, DATABASE, results.KEY)
+                                    await db.DBwrite3(INFORMATION.TO, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|${INFORMATION.BANK}|` + `${INFORMATION.DOC_LOAN}_${INFORMATION.LOAN_KEY}`, DATABASE, results.KEY)
                                 }
                             }
                         }

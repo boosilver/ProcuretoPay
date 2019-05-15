@@ -123,8 +123,8 @@ Fabric_Client.newDefaultKeyValueStore({
                                 BANK: INFORMATION.BANK,
                                 TYPE: INFORMATION.TYPE,
                                 DOC_LOAN: INFORMATION.DOC_LOAN,
-                                KEY: INFORMATION.KEY,
-                                PRICE_BORROW: INFORMATION.PRICE_BORROW,
+                                LOAN_KEY: INFORMATION.LOAN_KEY,
+                                PRICE_LOAN: INFORMATION.PRICE_LOAN,
                                 DATE: INFORMATION.DATE,
                             }
                         }
@@ -175,7 +175,7 @@ Fabric_Client.newDefaultKeyValueStore({
                                         });
                                 }
                             } else {
-                                console.log("---------PO---------------1")
+                                // console.log("---------PO---------------1")
                                 /////////////PO
                                 var Verify = await db.DBread("lotus", INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.PO_KEY)
                                 var SALT = await db.DBread("lotus", "PO", `PO_SALT|` + Verify.PO_KEY)
@@ -183,8 +183,8 @@ Fabric_Client.newDefaultKeyValueStore({
                                     && INFORMATION.INVOICE_KEY == Verify.INVOICE_KEY && INFORMATION.PO_KEY == Verify.PO_KEY && INFORMATION.VALUE == Verify.VALUE && INFORMATION.DATE == Verify.DATE
                                     && INFORMATION.SALT == SALT) { //// เช็คว่าที่ส่งมาตรงกับในดาต้าเบสไหม 
                                     var INFO = "INVOICE"
-                                    console.log(Verify)
-                                    console.log("---------********---------------3")
+                                    // console.log(Verify)
+                                    // console.log("---------********---------------3")
                                     var getkey = {
                                         FORM: "lotus",
                                         BANK: INFORMATION.BANK,
@@ -212,12 +212,12 @@ Fabric_Client.newDefaultKeyValueStore({
                             } else if (INFORMATION.TYPE == "ENDORSE_LOAN") {
                                 var Check_Endorse = ""
                                 try {
-                                    Check_Endorse = await db.DBread(INFORMATION.TO, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|${INFORMATION.BANK}|` + `${INFORMATION.DOC_LOAN}_${INFORMATION.KEY}`)
+                                    Check_Endorse = await db.DBread(INFORMATION.TO, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|${INFORMATION.BANK}|` + `${INFORMATION.DOC_LOAN}_${INFORMATION.LOAN_KEY}`)
                                 } catch (error) {
                                     // console.log(error)
                                 }
                                 if (!Check_Endorse) {
-                                    await db.DBwrite3(INFORMATION.TO, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|${INFORMATION.BANK}|` + `${INFORMATION.DOC_LOAN}_${INFORMATION.KEY}`, DATABASE, results.KEY)
+                                    await db.DBwrite3(INFORMATION.TO, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|${INFORMATION.BANK}|` + `${INFORMATION.DOC_LOAN}_${INFORMATION.LOAN_KEY}`, DATABASE, results.KEY)
                                 }
                             }
                         }

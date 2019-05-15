@@ -75,8 +75,6 @@ app.post('/Genkey', function (req, res, next) {
   
 }) 
 });
-
-
 app.post('/Accept', function (req, res, next) {
   let functionName = '[API: POST /api/v1/Accept]';
   getFORM(req.body).then((getkey) => {
@@ -226,11 +224,11 @@ new toBC(bcuserName).Loan(req.body).then((result) => {
   
 });
 
-app.post('/Request_Verify_Invoice', function (req, res, next) {
-  let functionName = '[API: POST /api/v1/Request_Verify_Invoice]';
+app.post('/Request_Verify', function (req, res, next) {
+  let functionName = '[API: POST /api/v1/Request_Verify]';
   getBANK(req.body).then((getkey) => {
     const bcuserName = `${getkey}`
-new toBC(bcuserName).Request_Verify_Invoice(req.body).then((result) => {
+new toBC(bcuserName).Request_Verify(req.body).then((result) => {
     res.status(201);
     res.json(result.message);
   })
@@ -272,7 +270,6 @@ new toBC(bcuserName).endorse_loan(req.body).then((result) => {
 
 app.post('/admin/generatekeypair', function (req, res, next) {
   let functionName = '[API: POST /api/v1/admin/generatekeypair]';
-
   getUser(req.body).then((getkey) => {
     const bcuserName = `${getkey}`
     logger.debug(bcuserName);
@@ -291,14 +288,31 @@ app.post('/admin/generatekeypair', function (req, res, next) {
   })
 
 });
-
-//-------------------
 app.post('/Checkkey', function (req, res, next) {
-  let functionName = '[API: POST /api/v1/admin/Checkkey]';
+  let functionName = '[API: POST /api/v1/Checkkey]';
 
   getUser(req.body).then((getkey) => {
     const bcuserName = `${getkey}`
 new toBC(bcuserName).Checkkey(req.body).then((result) => {
+    res.status(201);
+    res.json(result.message);
+  })
+  .catch((error) => {
+    logger.error(`${functionName} Failed to check new Service Request: ${error}`);
+    res.status(500);
+    res.json({
+      code: 500,
+      message: `Failed to check new Service Request: ${error}`
+    });
+  });
+})
+  
+}); 
+app.post('/Get_Blockchain', function (req, res, next) {
+  let functionName = '[API: POST /api/v1/Get_Blockchain]';
+  getUser(req.body).then((getkey) => {
+    const bcuserName = `${getkey}`
+new toBC(bcuserName).Get_Blockchain(req.body).then((result) => {
     res.status(201);
     res.json(result.message);
   })
