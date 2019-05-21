@@ -49,12 +49,6 @@ configObject.channel = configParser.getBlockchainChannel();
 if (configObject.channel == null)
     throw "[ConfigEnv] Channel name is required";
 
-// configObject.channel2 = configParser.getBlockchainChannel2();
-// if (configObject.channel2 == null)
-//     throw "[ConfigEnv] Channel name is required";
-// console.log("000000000000000000000000000000000000000000000000000"+configObject.channel)
-// console.log("000000000000000000000000000000000000000000000000000"+configObject.channel2)
-
 configObject.chaincodeId = configParser.getBlockchainChaincode();
 if (configObject.chaincodeId == null)
     throw "[ConfigEnv] Chaincode id is required";

@@ -77,8 +77,7 @@ app.post('/Genkey', function (req, res, next) {
 });
 app.post('/Accept', function (req, res, next) {
   let functionName = '[API: POST /api/v1/Accept]';
-  getFORM(req.body).then((getkey) => {
-    const bcuserName = `${getkey}`
+    const bcuserName = req.body.FORM.toLowerCase()
     console.log(req.body)
 new toBC(bcuserName).Accept(req.body).then((result) => {
     res.status(201);
@@ -92,7 +91,6 @@ new toBC(bcuserName).Accept(req.body).then((result) => {
       message: `Failed to transfer new Service Request: ${error}`
     });
   });
-})
   
 });
 //#############################################################################
@@ -100,8 +98,7 @@ new toBC(bcuserName).Accept(req.body).then((result) => {
 //#############################################################################
 app.post('/CreatePO', function (req, res, next) {
   let functionName = '[API: POST /api/v1/CreatePO]';
-  getFORM(req.body).then((getkey) => {
-    const bcuserName = `${getkey}`
+    const bcuserName = req.body.FORM.toLowerCase()
     console.log(req.body)
 new toBC(bcuserName).CreatePO(req.body).then((result) => {
     res.status(201);
@@ -115,14 +112,10 @@ new toBC(bcuserName).CreatePO(req.body).then((result) => {
       message: `Failed to transfer new Service Request: ${error}`
     });
   });
-})
-  
 });
 app.post('/GetPO', function (req, res, next) {
   let functionName = '[API: POST /api/v1/GetPO]';
-
-  getUser(req.body).then((getkey) => {
-    const bcuserName = `${getkey}`
+    const bcuserName = req.body.USER.toLowerCase()
 new toBC(bcuserName).GetPO(req.body).then((result) => {
     res.status(201);
     res.json(result.message);
@@ -135,14 +128,11 @@ new toBC(bcuserName).GetPO(req.body).then((result) => {
       message: `Failed to check new Service Request: ${error}`
     });
   });
-})
   
 }); 
 app.post('/GetValue', function (req, res, next) {
   let functionName = '[API: POST /api/v1/GetValue]';
-
-  getUser(req.body).then((getkey) => {
-    const bcuserName = `${getkey}`
+    const bcuserName = req.body.USER.toLowerCase()
 new toBC(bcuserName).GetValue(req.body).then((result) => {
     res.status(201);
     res.json(result.message);
@@ -155,7 +145,6 @@ new toBC(bcuserName).GetValue(req.body).then((result) => {
       message: `Failed to check new Service Request: ${error}`
     });
   });
-})
   
 }); 
 //#############################################################################
@@ -163,8 +152,7 @@ new toBC(bcuserName).GetValue(req.body).then((result) => {
 //#############################################################################
 app.post('/CreateInvoice', function (req, res, next) {
   let functionName = '[API: POST /api/v1/CreateInvoice]';
-  getFORM(req.body).then((getkey) => {
-    const bcuserName = `${getkey}`
+    const bcuserName = req.body.FORM.toLowerCase()
 new toBC(bcuserName).CreateInvoice(req.body).then((result) => {
     res.status(201);
     res.json(result.message);
@@ -177,14 +165,11 @@ new toBC(bcuserName).CreateInvoice(req.body).then((result) => {
       message: `Failed to transfer new Service Request: ${error}`
     });
   });
-})
   
 });
 app.post('/CheckInvoice', function (req, res, next) {
   let functionName = '[API: POST /api/v1/CheckInvoice]';
-
-  getUser(req.body).then((getkey) => {
-    const bcuserName = `${getkey}`
+    const bcuserName = req.body.USER.toLowerCase()
 new toBC(bcuserName).CheckInvoice(req.body).then((result) => {
     res.status(201);
     res.json(result.message);
@@ -197,7 +182,6 @@ new toBC(bcuserName).CheckInvoice(req.body).then((result) => {
       message: `Failed to check new Service Request: ${error}`
     });
   });
-})
   
 }); 
 
@@ -206,8 +190,7 @@ new toBC(bcuserName).CheckInvoice(req.body).then((result) => {
 //#############################################################################
 app.post('/Loan', function (req, res, next) {
   let functionName = '[API: POST /api/v1/Loan]';
-  getFORM(req.body).then((getkey) => {
-    const bcuserName = `${getkey}`
+    const bcuserName = req.body.FORM.toLowerCase()
 new toBC(bcuserName).Loan(req.body).then((result) => {
     res.status(201);
     res.json(result.message);
@@ -220,14 +203,12 @@ new toBC(bcuserName).Loan(req.body).then((result) => {
       message: `Failed to transfer new Service Request: ${error}`
     });
   });
-})
   
 });
 
 app.post('/Request_Verify', function (req, res, next) {
   let functionName = '[API: POST /api/v1/Request_Verify]';
-  getBANK(req.body).then((getkey) => {
-    const bcuserName = `${getkey}`
+    const bcuserName = req.body.BANK.toLowerCase()
 new toBC(bcuserName).Request_Verify(req.body).then((result) => {
     res.status(201);
     res.json(result.message);
@@ -240,14 +221,11 @@ new toBC(bcuserName).Request_Verify(req.body).then((result) => {
       message: `Failed to transfer new Service Request: ${error}`
     });
   });
-})
-  
 });
 
 app.post('/endorse_loan', function (req, res, next) {
   let functionName = '[API: POST /api/v1/endorse_loan]';
-  getBANK(req.body).then((getkey) => {
-    const bcuserName = `${getkey}`
+    const bcuserName = req.body.BANK.toLowerCase()
 new toBC(bcuserName).endorse_loan(req.body).then((result) => {
     res.status(201);
     res.json(result.message);
@@ -260,8 +238,6 @@ new toBC(bcuserName).endorse_loan(req.body).then((result) => {
       message: `Failed to transfer new Service Request: ${error}`
     });
   });
-})
-  
 });
 
 //#############################################################################
@@ -270,8 +246,7 @@ new toBC(bcuserName).endorse_loan(req.body).then((result) => {
 
 app.post('/admin/generatekeypair', function (req, res, next) {
   let functionName = '[API: POST /api/v1/admin/generatekeypair]';
-  getUser(req.body).then((getkey) => {
-    const bcuserName = `${getkey}`
+    const bcuserName = req.body.USER.toLowerCase()
     logger.debug(bcuserName);
     new toBC(bcuserName).GenerateKeyPair(req.body).then((result) => {
       res.status(201);
@@ -285,14 +260,11 @@ app.post('/admin/generatekeypair', function (req, res, next) {
           message: `Failed to check new Service Request: ${error}`
         });
       });
-  })
 
 });
 app.post('/Checkkey', function (req, res, next) {
   let functionName = '[API: POST /api/v1/Checkkey]';
-
-  getUser(req.body).then((getkey) => {
-    const bcuserName = `${getkey}`
+    const bcuserName = req.body.USER.toLowerCase()
 new toBC(bcuserName).Checkkey(req.body).then((result) => {
     res.status(201);
     res.json(result.message);
@@ -305,13 +277,11 @@ new toBC(bcuserName).Checkkey(req.body).then((result) => {
       message: `Failed to check new Service Request: ${error}`
     });
   });
-})
   
 }); 
 app.post('/Get_Blockchain', function (req, res, next) {
   let functionName = '[API: POST /api/v1/Get_Blockchain]';
-  getUser(req.body).then((getkey) => {
-    const bcuserName = `${getkey}`
+    const bcuserName = req.body.USER.toLowerCase()
 new toBC(bcuserName).Get_Blockchain(req.body).then((result) => {
     res.status(201);
     res.json(result.message);
@@ -324,7 +294,6 @@ new toBC(bcuserName).Get_Blockchain(req.body).then((result) => {
       message: `Failed to check new Service Request: ${error}`
     });
   });
-})
   
 }); 
 

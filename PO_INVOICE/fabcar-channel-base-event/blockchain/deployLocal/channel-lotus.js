@@ -35,20 +35,6 @@ var store_path = path.join(__dirname, 'hfc-key-store');
 console.log('Store path:' + store_path);
 var tx_id = null;
 
-function DATA_NOT_FOUND(INFORMATION) {
-    var getkey = {
-        FORM: "lotus",
-        BANK: INFORMATION.BANK,
-        PO: "data not found",
-    };
-    new toBC("lotus").AutoPushInBlockchain(getkey).then((result) => {
-    })
-        .catch((error) => {
-            logger.error(`${functionName} Failed to transfer new Service Request: ${error}`);
-
-        });
-
-}
 // create the key value store as defined in the fabric-client/config/default.json 'key-value-store' setting
 Fabric_Client.newDefaultKeyValueStore({
     path: store_path
@@ -99,7 +85,7 @@ Fabric_Client.newDefaultKeyValueStore({
                     var results = JSON.parse(event.payload.toString('utf8'))
                     const key = new NodeRSA();
                     const ciphertext = results.VALUE
-                    var keyprivate = await db.DBreadprivate("lotus", "CompanyData", "lotus")   //// อันนี้ต้องทำของใครของมัน อันนี้ของโลตัส
+                    var keyprivate = await db.DBread("lotus", "CompanyData", "lotus")   //// อันนี้ต้องทำของใครของมัน อันนี้ของโลตัส
                     // var pemFile = path.resolve(__dirname,`../../../controller/LOTUS/private_key.pem`)
                     // var keyprivate =fs.readFileSync(pemFile)
                     key.importKey(keyprivate, 'pkcs1-private-pem');
@@ -114,8 +100,8 @@ Fabric_Client.newDefaultKeyValueStore({
                         var DATABASE = {}
                         if (INFORMATION.TYPE == "PO") {
                             DATABASE = {
-                                TO: INFORMATION.TO.toLowerCase(),
-                                FORM: INFORMATION.FORM.toLowerCase(),
+                                TO: INFORMATION.TO,
+                                FORM: INFORMATION.FORM,
                                 TYPE: INFORMATION.TYPE,
                                 PO_KEY: INFORMATION.PO_KEY,
                                 VALUE: INFORMATION.VALUE,
@@ -123,8 +109,8 @@ Fabric_Client.newDefaultKeyValueStore({
                             }
                         } else if (INFORMATION.TYPE == "INVOICE") {
                             DATABASE = {
-                                TO: INFORMATION.TO.toLowerCase(),
-                                FORM: INFORMATION.FORM.toLowerCase(),
+                                TO: INFORMATION.TO,
+                                FORM: INFORMATION.FORM,
                                 TYPE: INFORMATION.TYPE,
                                 INVOICE_KEY: INFORMATION.INVOICE_KEY,
                                 PO_KEY: INFORMATION.PO_KEY,
@@ -133,10 +119,10 @@ Fabric_Client.newDefaultKeyValueStore({
                             }
                         } else if (INFORMATION.TYPE == "ENDORSE_LOAN") {
                             DATABASE = {
-                                TO: INFORMATION.TO.toLowerCase(),
-                                BANK: INFORMATION.BANK.toLowerCase(),
+                                TO: INFORMATION.TO,
+                                BANK: INFORMATION.BANK,
                                 TYPE: INFORMATION.TYPE,
-                                DOC_LOAN: INFORMATION.DOC_LOAN.toLowerCase(),
+                                DOC_LOAN: INFORMATION.DOC_LOAN,
                                 LOAN_KEY: INFORMATION.LOAN_KEY,
                                 PRICE_LOAN: INFORMATION.PRICE_LOAN,
                                 DATE: INFORMATION.DATE,
@@ -163,95 +149,75 @@ Fabric_Client.newDefaultKeyValueStore({
                         if (INFORMATION.VERIFY == "Verify") {
                             if (INFORMATION.TYPE == "INVOICE") {
                                 ///////////INVOICE
-                                try {
-                                    var Verify = await db.DBread("lotus", INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.INVOICE_KEY)
-                                    var SALT = await db.DBread("lotus", "PO", `PO_SALT|` + Verify.PO_KEY)
-                                } catch (error) {
-                                    // DATA_NOT_FOUND(INFORMATION)
-                                }
-                                try {
-                                    if (INFORMATION.TO == Verify.TO && INFORMATION.FORM == Verify.FORM && INFORMATION.TYPE == Verify.TYPE
-                                        && INFORMATION.INVOICE_KEY == Verify.INVOICE_KEY && INFORMATION.PO_KEY == Verify.PO_KEY && INFORMATION.VALUE == Verify.VALUE && INFORMATION.DATE == Verify.DATE
-                                        && INFORMATION.SALT == SALT) { //// เช็คว่าที่ส่งมาตรงกับในดาต้าเบสไหม 
-                                        var INFO = "PO"
-                                        var PO = await db.DBread("lotus", INFO, `${INFO}_BODY|` + INFORMATION.PO_KEY)
-                                        var SALT = await db.DBread("lotus", INFO, `${INFO}_SALT|` + INFORMATION.PO_KEY)
-                                        var getkey = {
-                                            FORM: "lotus",
-                                            BANK: INFORMATION.BANK,
-                                            PO: PO,
-                                            SALT: SALT,
-                                            SALT2: INFORMATION.SALT2,
-                                        };
-                                        var functionName = "eventlotus"
-                                        // console.log("+++ : "+companydata)
-                                        // console.log("+++"+getkey)
-                                        new toBC("lotus").AutoPushInBlockchain(getkey).then((result) => {
-                                        })
-                                            .catch((error) => {
-                                                logger.error(`${functionName} Failed to transfer new Service Request: ${error}`);
-    
-                                            });
-                                    }else {
-                                        DATA_NOT_FOUND(INFORMATION)
-                                    }
-                                } catch (error) {
-                                    DATA_NOT_FOUND(INFORMATION)
+                                var Verify = await db.DBread("lotus", INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.INVOICE_KEY)
+                                var SALT = await db.DBread("lotus", "PO", `PO_SALT|` + Verify.PO_KEY)
+                                if (INFORMATION.TO == Verify.TO && INFORMATION.FORM == Verify.FORM && INFORMATION.TYPE == Verify.TYPE
+                                    && INFORMATION.INVOICE_KEY == Verify.INVOICE_KEY && INFORMATION.PO_KEY == Verify.PO_KEY && INFORMATION.VALUE == Verify.VALUE && INFORMATION.DATE == Verify.DATE
+                                    && INFORMATION.SALT == SALT) { //// เช็คว่าที่ส่งมาตรงกับในดาต้าเบสไหม 
+                                    var INFO = "PO"
+                                    var PO = await db.DBread("lotus", INFO, `${INFO}_BODY|` + INFORMATION.PO_KEY)
+                                    var SALT = await db.DBread("lotus", INFO, `${INFO}_SALT|` + INFORMATION.PO_KEY)
+                                    var getkey = {
+                                        FORM: "lotus",
+                                        BANK: INFORMATION.BANK,
+                                        PO: PO,
+                                        SALT: SALT,
+                                        SALT2: INFORMATION.SALT2,
+                                    };
+                                    var functionName = "eventlotus"
+                                    // console.log("+++ : "+companydata)
+                                    // console.log("+++"+getkey)
+                                    new toBC("lotus").AutoPushInBlockchain(getkey).then((result) => {
+                                    })
+                                        .catch((error) => {
+                                            logger.error(`${functionName} Failed to transfer new Service Request: ${error}`);
+
+                                        });
                                 }
                             } else {
-                                // console.log("---------PO---------------1")
+                                console.log("---------PO---------------1")
                                 /////////////PO
-                                try {
-                                    var Verify = await db.DBread("lotus", INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.PO_KEY)
-                                    var SALT = await db.DBread("lotus", "PO", `PO_SALT|` + Verify.PO_KEY)
-                                } catch (error) {
-                                    // DATA_NOT_FOUND(INFORMATION)
-                                }
-                                try {
-                                    if (INFORMATION.TO == Verify.TO && INFORMATION.FORM == Verify.FORM && INFORMATION.TYPE == Verify.TYPE
-                                        && INFORMATION.INVOICE_KEY == Verify.INVOICE_KEY && INFORMATION.PO_KEY == Verify.PO_KEY && INFORMATION.VALUE == Verify.VALUE && INFORMATION.DATE == Verify.DATE
-                                        && INFORMATION.SALT == SALT) { //// เช็คว่าที่ส่งมาตรงกับในดาต้าเบสไหม 
-                                        var INFO = "INVOICE"
-                                        // console.log(Verify)
-                                        // console.log("---------********---------------3")
-                                        var getkey = {
-                                            FORM: "lotus",
-                                            BANK: INFORMATION.BANK,
-                                            PO: Verify,
-                                            SALT: SALT,
-                                            SALT2: INFORMATION.SALT2,
-                                        };
-                                        var functionName = "eventlotus"
-                                        // console.log("+++ : "+companydata)
-                                        // console.log("+++"+getkey)
-                                        new toBC("lotus").AutoPushInBlockchain(getkey).then((result) => {
-                                        })
-                                            .catch((error) => {
-                                                logger.error(`${functionName} Failed to transfer new Service Request: ${error}`);
+                                var Verify = await db.DBread("lotus", INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.PO_KEY)
+                                var SALT = await db.DBread("lotus", "PO", `PO_SALT|` + Verify.PO_KEY)
+                                if (INFORMATION.TO == Verify.TO && INFORMATION.FORM == Verify.FORM && INFORMATION.TYPE == Verify.TYPE
+                                    && INFORMATION.INVOICE_KEY == Verify.INVOICE_KEY && INFORMATION.PO_KEY == Verify.PO_KEY && INFORMATION.VALUE == Verify.VALUE && INFORMATION.DATE == Verify.DATE
+                                    && INFORMATION.SALT == SALT) { //// เช็คว่าที่ส่งมาตรงกับในดาต้าเบสไหม 
+                                    var INFO = "INVOICE"
+                                    console.log(Verify)
+                                    console.log("---------********---------------3")
+                                    var getkey = {
+                                        FORM: "lotus",
+                                        BANK: INFORMATION.BANK,
+                                        PO: Verify,
+                                        SALT: SALT,
+                                        SALT2: INFORMATION.SALT2,
+                                    };
+                                    var functionName = "eventlotus"
+                                    // console.log("+++ : "+companydata)
+                                    // console.log("+++"+getkey)
+                                    new toBC("lotus").AutoPushInBlockchain(getkey).then((result) => {
+                                    })
+                                        .catch((error) => {
+                                            logger.error(`${functionName} Failed to transfer new Service Request: ${error}`);
 
-                                            });
-                                    }else{
-                                        DATA_NOT_FOUND(INFORMATION)
-                                    }
-                                } catch (error) {
-                                    DATA_NOT_FOUND(INFORMATION)
+                                        });
                                 }
                             }
                         } else if (!checkID) {
                             if (INFORMATION.TYPE == "PO") {
-                                await db.DBwrite3(INFORMATION.TO.toLowerCase(), INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.PO_KEY, DATABASE, results.KEY)
-                                await db.DBwrite(INFORMATION.TO.toLowerCase(), INFORMATION.TYPE, `${INFORMATION.TYPE}_SALT|` + INFORMATION.PO_KEY, INFORMATION.SALT)
+                                await db.DBwrite3(INFORMATION.TO, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.PO_KEY, DATABASE, results.KEY)
+                                await db.DBwrite(INFORMATION.TO, INFORMATION.TYPE, `${INFORMATION.TYPE}_SALT|` + INFORMATION.PO_KEY, INFORMATION.SALT)
                             } else if (INFORMATION.TYPE == "INVOICE") {
-                                await db.DBwrite3(INFORMATION.TO.toLowerCase(), INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.INVOICE_KEY, DATABASE, results.KEY)
+                                await db.DBwrite3(INFORMATION.TO, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.INVOICE_KEY, DATABASE, results.KEY)
                             } else if (INFORMATION.TYPE == "ENDORSE_LOAN") {
                                 var Check_Endorse = ""
                                 try {
-                                    Check_Endorse = await db.DBread(INFORMATION.TO.toLowerCase(), INFORMATION.TYPE, `ENDORSE_LOAN_BODY|${INFORMATION.TO.toLowerCase()}|${INFORMATION.BANK.toLowerCase()}|` + `${INFORMATION.DOC_LOAN.toLowerCase()}_${INFORMATION.LOAN_KEY}`)
+                                    Check_Endorse = await db.DBread(INFORMATION.TO, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|${INFORMATION.BANK}|` + `${INFORMATION.DOC_LOAN}_${INFORMATION.LOAN_KEY}`)
                                 } catch (error) {
                                     // console.log(error)
                                 }
                                 if (!Check_Endorse) {
-                                    await db.DBwrite3(INFORMATION.TO.toLowerCase(), INFORMATION.TYPE, `ENDORSE_LOAN_BODY|${INFORMATION.TO.toLowerCase()}|${INFORMATION.BANK.toLowerCase()}|` + `${INFORMATION.DOC_LOAN.toLowerCase()}_${INFORMATION.LOAN_KEY}`, DATABASE, results.KEY)
+                                    await db.DBwrite3(INFORMATION.TO, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|${INFORMATION.BANK}|` + `${INFORMATION.DOC_LOAN}_${INFORMATION.LOAN_KEY}`, DATABASE, results.KEY)
                                 }
                             }
                         }

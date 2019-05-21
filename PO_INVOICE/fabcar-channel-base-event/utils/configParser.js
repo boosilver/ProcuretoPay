@@ -35,13 +35,6 @@ class ConfigParser {
         this.blockchainChaincode = configObject.blockchain.chaincodeId;
         //logger.info("[Config Parser] blockchainChaincode: " + JSON.stringify(this.blockchainChaincode));
 
-        this.blockchainChannel2 = configObject.blockchain.channel2;
-        logger.info("[Config Parser] blockchainChannel2: " + JSON.stringify(this.blockchainChannel));
-        logger.info("[Config Parser] blockchainChannel2: " + JSON.stringify(this.blockchainChannel2));
-        logger.info("25252525255252523333333333333333333333333333332525252525252525252525" );
-        this.blockchainChaincode2 = configObject.blockchain.chaincodeId2;
-        //logger.info("[Config Parser] blockchainChaincode2: " + JSON.stringify(this.blockchainChaincode2));
-
         this.blockchainMSPId = configObject.blockchain.mspId;
         //logger.info("[Config Parser] blockchainMSPId: " + JSON.stringify(this.blockchainMSPId));
 

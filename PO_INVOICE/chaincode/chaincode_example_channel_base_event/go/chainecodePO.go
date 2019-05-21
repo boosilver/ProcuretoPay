@@ -20,6 +20,7 @@ type USER_INFORMATION struct {
 type PO_INFORMATION struct {
 	VALUE string `json:"VALUE"`  ///json คือคีย์ที่ใช้เวลาส่งไปที่อื่นต่อ
 	KEY   string `json:"KEY"`
+	INVOICE_KEY string `json:"INVOICE_NUM"`
 }
 type INVOICE_INFORMATION struct {
 	KEY   string `json:"KEY"`
@@ -87,8 +88,9 @@ func (t *FundTransferChaincode) CreatePO(stub shim.ChaincodeStubInterface, args 
 	}
 
 	PO_DATA := PO_INFORMATION{
-		VALUE: VALUE,
 		KEY:   KEY,
+		VALUE: VALUE,
+		INVOICE_KEY: "",
 	}
 	PO_MARSHAL, err := json.Marshal(PO_DATA)
 	if err != nil {
@@ -119,19 +121,53 @@ func (t *FundTransferChaincode) CreatePO(stub shim.ChaincodeStubInterface, args 
 func (t *FundTransferChaincode) CreateInvoice(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	var VALUE string
 	var KEY string
-	if len(args) != 2 {
+	var HASH_PO  string
+	var INVOICE_KEY string
+	var PO_DATA = PO_INFORMATION{}
+	if len(args) != 4 {
 		return shim.Error("Incorrect number of arguments  ")
 	}
 	KEY = args[0]   
-	VALUE = args[1]                              ///
-	CHEACK_INVOICE_KEY, err := stub.GetState(KEY) /// ของจริงใช้ แฮดแทน
+	VALUE = args[1] 
+	INVOICE_KEY = args[2]  
+	HASH_PO =args[3]                           ///
+	CHEACK_INVOICE_KEY, err := stub.GetState(KEY) /// hash ของ อินวอยนั้นๆ
 	if err != nil {
 		fmt.Println(err)
-		return shim.Error("Failed to get state1")
+		return shim.Error("Failed to get state KEY")
 	}
 	if CHEACK_INVOICE_KEY != nil {
 		return shim.Error("this invoice number has already been used ") //////เช็คว่ามีอินวอยใบนี้หรือยัง ซ้ำไหม
 	}
+	///////////
+	PO_MARSHAL, err := stub.GetState(HASH_PO) /// ดึงข้อมูล po มา
+	if err != nil {
+		fmt.Println(err)
+		return shim.Error("Failed to get state HASH_PO")
+	}
+	if PO_MARSHAL == nil {
+		return shim.Error("This po does not exist. ") //////เช็คว่ามี PO ใบนี้จริงหรือเปล่า
+	}
+	json.Unmarshal(PO_MARSHAL, &PO_DATA)  // Unmarshal ให้มองเห็นค่า PO
+	if PO_DATA.INVOICE_KEY != ""{
+		return shim.Error("This po  has already Invoice "+PO_DATA.INVOICE_KEY+".")
+	}
+	var PO_INFORMATION = PO_INFORMATION{
+		VALUE:			PO_DATA.VALUE,
+		KEY:   			PO_DATA.KEY,
+		INVOICE_KEY:    INVOICE_KEY,  //เอาเลขอินวอยยัดลงไป
+	}
+	PO_MARSHAL, err = json.Marshal(PO_INFORMATION) //เอาข้อมูล  PO มามาแชล
+		if err != nil {
+			fmt.Print(err)
+			return shim.Error("Can't Marshal PO")
+		}
+	err = stub.PutState(HASH_PO, PO_MARSHAL) /// เก็บลง po
+	if err != nil {
+		fmt.Print("err")
+		return shim.Error("can't put stub 2 ")
+	}
+	/////////////////
 	var INVOICE_INFORMATION = INVOICE_INFORMATION{ ///เก็บค่าลง invoice
 		KEY:   KEY,
 		VALUE: VALUE,
@@ -150,7 +186,7 @@ func (t *FundTransferChaincode) CreateInvoice(stub shim.ChaincodeStubInterface, 
 		return shim.Error("can't put stub ")
 	}
 	fmt.Println(lineIvoice)
-	fmt.Println("VALUE = " + VALUE + "\n" + "KEY = " + KEY)
+	fmt.Println("KEY = " + KEY+"\n" + "VALUE = " + VALUE)
 	fmt.Println(line)
 	Payload := []byte(INVOICE_MARSHAL)
 	stub.SetEvent("event", Payload) ///เก็บลอง event
@@ -196,7 +232,7 @@ func (t *FundTransferChaincode) PushInBlockchain(stub shim.ChaincodeStubInterfac
 		return shim.Error("can't put stub ")
 	}
 	fmt.Println(linepush)
-	fmt.Println("VALUE = " + VALUE + "\n" + "KEY = " + KEY)
+	fmt.Println("KEY = " + KEY+"\n" + "VALUE = " + VALUE  )
 	fmt.Println(line)
 	Payload := []byte(INVOICE_MARSHAL)
 	stub.SetEvent("event", Payload) ///เก็บลอง event
