@@ -20,11 +20,21 @@ type USER_INFORMATION struct {
 type PO_INFORMATION struct {
 	VALUE string `json:"VALUE"`  ///json คือคีย์ที่ใช้เวลาส่งไปที่อื่นต่อ
 	KEY   string `json:"KEY"`
-	INVOICE_KEY string `json:"INVOICE_NUM"`
+	INVOICE_KEY string `json:"INVOICE_KEY"`
+	HASH_USER string `json:"HASH_USER"`
+	STATUS string `json:"STATUS"`
 }
 type INVOICE_INFORMATION struct {
 	KEY   string `json:"KEY"`
 	VALUE string `json:"VALUE"`
+	HASH_USER string `json:"HASH_USER"`
+	STATUS string `json:"STATUS"`
+}
+type INFORMATION struct {
+	KEY   string `json:"KEY"`
+	VALUE string `json:"VALUE"`
+	HASH_USER string `json:"HASH_USER"`
+	STATUS string `json:"STATUS"`
 }
 type STORE_KEY struct {
 	COMPANYNAME string `json:"COMPANYNAME"`
@@ -51,6 +61,10 @@ func (t *FundTransferChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Resp
 		return t.StoreKey(stub, args)
 	} else if function == "PushInBlockchain" {
 		return t.PushInBlockchain(stub, args)
+	}else if function == "Loan" {
+		return t.Loan(stub, args)
+	}else if function == "Reject" {
+		return t.Reject(stub, args)
 	}
 	// } else if function == "CheckPO" {
 	// 	return t.CheckPO(stub, args)
@@ -72,12 +86,14 @@ func (t *FundTransferChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Resp
 func (t *FundTransferChaincode) CreatePO(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	var VALUE string
 	var KEY string
+	var HASH_USER string
 	var err error
-	if len(args) != 2 {
+	if len(args) != 3 {
 		return shim.Error("Incorrect number of arguments ")
 	}
 	KEY = args[0]
 	VALUE = args[1]
+	HASH_USER =args[2]
 	CREATE_PO, err := stub.GetState(KEY) /// ของจริงใช้คีย์เป็น แฮด
 	if err != nil {
 		fmt.Println(err)
@@ -91,6 +107,8 @@ func (t *FundTransferChaincode) CreatePO(stub shim.ChaincodeStubInterface, args 
 		KEY:   KEY,
 		VALUE: VALUE,
 		INVOICE_KEY: "",
+		HASH_USER: HASH_USER,
+		STATUS: "",
 	}
 	PO_MARSHAL, err := json.Marshal(PO_DATA)
 	if err != nil {
@@ -100,6 +118,8 @@ func (t *FundTransferChaincode) CreatePO(stub shim.ChaincodeStubInterface, args 
 	if PO_MARSHAL == nil {
 		return shim.Error("Marshal havn't value")
 	}
+	// fmt.Println("-------fmt.Print(MARSHAL)-----------")
+	// fmt.Println(PO_MARSHAL)
 	err = stub.PutState(KEY, PO_MARSHAL) /// ของจริงใช้คีย์เป็น แฮด
 	if err != nil {
 		fmt.Print("err")
@@ -123,14 +143,16 @@ func (t *FundTransferChaincode) CreateInvoice(stub shim.ChaincodeStubInterface, 
 	var KEY string
 	var HASH_PO  string
 	var INVOICE_KEY string
+	var HASH_USER string
 	var PO_DATA = PO_INFORMATION{}
-	if len(args) != 4 {
+	if len(args) != 5 {
 		return shim.Error("Incorrect number of arguments  ")
 	}
 	KEY = args[0]   
 	VALUE = args[1] 
 	INVOICE_KEY = args[2]  
-	HASH_PO =args[3]                           ///
+	HASH_PO =args[3]    
+	HASH_USER = args[4]                       ///
 	CHEACK_INVOICE_KEY, err := stub.GetState(KEY) /// hash ของ อินวอยนั้นๆ
 	if err != nil {
 		fmt.Println(err)
@@ -152,10 +174,15 @@ func (t *FundTransferChaincode) CreateInvoice(stub shim.ChaincodeStubInterface, 
 	if PO_DATA.INVOICE_KEY != ""{
 		return shim.Error("This po  has already Invoice "+PO_DATA.INVOICE_KEY+".")
 	}
+	if PO_DATA.STATUS == "reject"{
+		return shim.Error("This PO has been reject.")
+	}
 	var PO_INFORMATION = PO_INFORMATION{
 		VALUE:			PO_DATA.VALUE,
 		KEY:   			PO_DATA.KEY,
 		INVOICE_KEY:    INVOICE_KEY,  //เอาเลขอินวอยยัดลงไป
+		HASH_USER: 		PO_DATA.HASH_USER,
+		STATUS:			PO_DATA.STATUS,
 	}
 	PO_MARSHAL, err = json.Marshal(PO_INFORMATION) //เอาข้อมูล  PO มามาแชล
 		if err != nil {
@@ -171,6 +198,8 @@ func (t *FundTransferChaincode) CreateInvoice(stub shim.ChaincodeStubInterface, 
 	var INVOICE_INFORMATION = INVOICE_INFORMATION{ ///เก็บค่าลง invoice
 		KEY:   KEY,
 		VALUE: VALUE,
+		HASH_USER: HASH_USER,
+		STATUS: "",
 	}
 	INVOICE_MARSHAL, err := json.Marshal(INVOICE_INFORMATION)
 	if err != nil {
@@ -193,40 +222,57 @@ func (t *FundTransferChaincode) CreateInvoice(stub shim.ChaincodeStubInterface, 
 	///////////////////////////// History
 	return shim.Success(INVOICE_MARSHAL)
 }
-//#############################################################################
-//############################### BANK #######################################
-//#############################################################################
-func (t *FundTransferChaincode) PushInBlockchain(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+
+func (t *FundTransferChaincode) Loan(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	var KEY string
 	var VALUE string
-	if len(args) != 2 {
+	var Hash_DOC string
+	var HASH_USER string
+	if len(args) != 4 {
 		return shim.Error("Incorrect number of arguments  ")
 	}
 	KEY = args[0]   
-	VALUE = args[1]                              ///
-	CHEACK_INVOICE_KEY, err := stub.GetState(KEY) 
+	VALUE = args[1]  
+	Hash_DOC = args[2] 
+	HASH_USER = args[3]  
+	var DATA = PO_INFORMATION{}                          ///
+	CHEACK_KEY, err := stub.GetState(KEY) 
 	fmt.Println(linepush)
-	fmt.Println(CHEACK_INVOICE_KEY)
+	fmt.Println(CHEACK_KEY)
 	if err != nil {
 		fmt.Println(err)
 		return shim.Error("Failed to get state1")
 	}
-	if CHEACK_INVOICE_KEY != nil {
+	if CHEACK_KEY != nil {
 		return shim.Error("This already been used ") 
 	}
-	var INVOICE_INFORMATION = INVOICE_INFORMATION{ 
+	DOC_MARSHAL, err := stub.GetState(Hash_DOC) /// ดึงข้อมูล po มา
+	if err != nil {
+		fmt.Println(err)
+		return shim.Error("Failed to get state HASH_PO.")
+	}
+	if DOC_MARSHAL == nil {
+		return shim.Error("This po does not exist. ") //////เช็คว่ามี  ใบนี้จริงหรือเปล่า
+	}
+	json.Unmarshal(DOC_MARSHAL, &DATA)  // Unmarshal ให้มองเห็นค่า PO
+	if DATA.STATUS == "reject"{
+		return shim.Error("This document has been reject.")
+	}
+	var INFORMATION = INFORMATION{ 
 		KEY:   KEY,
 		VALUE: VALUE,
+		HASH_USER: HASH_USER,
+		STATUS: "",
 	}
-	INVOICE_MARSHAL, err := json.Marshal(INVOICE_INFORMATION)
+	MARSHAL, err := json.Marshal(INFORMATION)
 	if err != nil {
 		fmt.Print(err)
-		return shim.Error("Can't Marshal creat INVOICE")
+		return shim.Error("Can't Marshal creat ")
 	}
-	if INVOICE_MARSHAL == nil {
+	if MARSHAL == nil {
 		return shim.Error("Marshal havn't value")
 	}
-	err = stub.PutState(KEY, INVOICE_MARSHAL) /// ของจริงใช้แฮด
+	err = stub.PutState(KEY, MARSHAL) /// ของจริงใช้แฮด
 	if err != nil {
 		fmt.Print("err")
 		return shim.Error("can't put stub ")
@@ -234,10 +280,176 @@ func (t *FundTransferChaincode) PushInBlockchain(stub shim.ChaincodeStubInterfac
 	fmt.Println(linepush)
 	fmt.Println("KEY = " + KEY+"\n" + "VALUE = " + VALUE  )
 	fmt.Println(line)
-	Payload := []byte(INVOICE_MARSHAL)
+	Payload := []byte(MARSHAL)
 	stub.SetEvent("event", Payload) ///เก็บลอง event
 	///////////////////////////// History
-	return shim.Success(INVOICE_MARSHAL)
+	return shim.Success(MARSHAL)
+}
+//#############################################################################
+//############################### BANK #######################################
+//#############################################################################
+func (t *FundTransferChaincode) PushInBlockchain(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	var KEY string
+	var VALUE string
+	var HASH_USER string
+	if len(args) != 3 {
+		return shim.Error("Incorrect number of arguments  ")
+	}
+	KEY = args[0]   
+	VALUE = args[1]  
+	HASH_USER = args[2]                            ///
+	CHEACK_KEY, err := stub.GetState(KEY) 
+	fmt.Println(linepush)
+	fmt.Println(CHEACK_KEY)
+	if err != nil {
+		fmt.Println(err)
+		return shim.Error("Failed to get state1")
+	}
+	if CHEACK_KEY != nil {
+		return shim.Error("This already been used ") 
+	}
+	var INFORMATION = INFORMATION{ 
+		KEY:   KEY,
+		VALUE: VALUE,
+		HASH_USER: HASH_USER,
+		STATUS: "",
+	}
+	MARSHAL, err := json.Marshal(INFORMATION)
+	if err != nil {
+		fmt.Print(err)
+		return shim.Error("Can't Marshal creat ")
+	}
+	if MARSHAL == nil {
+		return shim.Error("Marshal havn't value")
+	}
+	err = stub.PutState(KEY, MARSHAL) /// ของจริงใช้แฮด
+	if err != nil {
+		fmt.Print("err")
+		return shim.Error("can't put stub ")
+	}
+	fmt.Println(linepush)
+	fmt.Println("KEY = " + KEY+"\n" + "VALUE = " + VALUE  )
+	fmt.Println(line)
+	Payload := []byte(MARSHAL)
+	stub.SetEvent("event", Payload) ///เก็บลอง event
+	///////////////////////////// History
+	return shim.Success(MARSHAL)
+}
+func (t *FundTransferChaincode) Reject(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	var KEY string   /// hash ของตัวที่เราจะลบ
+	var TYPE string /// สิ่งที่เราจะลบ (เอาไว้เลือกสตัก)
+	var HASH_USER string /// hash user ของเราที่จะทำ
+	if len(args) != 3 {
+		return shim.Error("Incorrect number of arguments  ")
+	}
+	KEY = args[0]   
+	TYPE = args[1]  
+	HASH_USER = args[2]      
+	var PO_DATA = PO_INFORMATION{}      
+	var INVOICE_DATA = INVOICE_INFORMATION{} 
+	var DATA = INFORMATION{}
+	var MARSHAL []byte
+	CHEACK_KEY, err := stub.GetState(KEY) 
+	fmt.Println(linepush)
+	fmt.Println("KEY = "+KEY +"\n" +"TYPE = "+TYPE+"\n" +"HASH_USER = "+HASH_USER)
+	// fmt.Println(CHEACK_KEY)
+	if err != nil {
+		fmt.Println(err)
+		return shim.Error("Failed to get state1")
+	}
+	if CHEACK_KEY == nil {
+		return shim.Error("Don't have history of User ") 
+	}
+	if TYPE == "PO"{
+		json.Unmarshal(CHEACK_KEY, &PO_DATA) 
+		var PO_INFORMATION = PO_INFORMATION{
+			VALUE:			PO_DATA.VALUE,
+			KEY:   			PO_DATA.KEY,
+			INVOICE_KEY:    PO_DATA.INVOICE_KEY, 
+			HASH_USER: 		PO_DATA.HASH_USER,
+			STATUS:			"reject",
+		}
+		// fmt.Println("new hash user	"+HASH_USER)
+		// fmt.Println("old hash user	"+PO_DATA.HASH_USER)
+		// fmt.Println("valuse	"+PO_INFORMATION.VALUE)
+		// fmt.Println("KEY	"+PO_INFORMATION.KEY)
+		// fmt.Println("INVOICE_KEY	"+PO_INFORMATION.INVOICE_KEY)
+		// fmt.Println("HASH_USER	"+PO_INFORMATION.HASH_USER)
+		// fmt.Println("STATUS	"+PO_INFORMATION.STATUS)
+		if HASH_USER == PO_DATA.HASH_USER{
+			MARSHAL, err = json.Marshal(PO_INFORMATION)
+			if err != nil {
+				fmt.Print(err)
+				return shim.Error("Can't Marshal creat ")
+			}
+			if MARSHAL == nil {
+				return shim.Error("Marshal havn't value")
+			}
+		}else{
+			return shim.Error("Permission denied PO")
+		}
+		
+	}else {
+		if TYPE == "INVOICE"{
+			json.Unmarshal(CHEACK_KEY, &INVOICE_DATA) 
+			var INVOICE_INFORMATION = INVOICE_INFORMATION{ 
+				KEY:   			INVOICE_DATA.KEY,
+				VALUE: 			INVOICE_DATA.VALUE,
+				HASH_USER: 		INVOICE_DATA.HASH_USER,
+				STATUS: 		"reject",
+			}
+			fmt.Println(HASH_USER)
+			fmt.Println(INVOICE_DATA.HASH_USER)
+			if HASH_USER == INVOICE_DATA.HASH_USER{
+				MARSHAL, err = json.Marshal(INVOICE_INFORMATION)
+				if err != nil {
+					fmt.Print(err)
+					return shim.Error("Can't Marshal creat ")
+				}
+				if MARSHAL == nil {
+					return shim.Error("Marshal havn't value")
+				}
+			}else{
+				return shim.Error("Permission denied Invoice")
+			}
+		}else {
+			json.Unmarshal(CHEACK_KEY, &DATA) 
+			var INFORMATION = INFORMATION{ 
+				KEY:   			DATA.KEY,
+				VALUE: 			DATA.VALUE,
+				HASH_USER: 		DATA.HASH_USER,
+				STATUS: 		"reject",
+			}
+			fmt.Println(HASH_USER)
+			fmt.Println(DATA.HASH_USER)
+			if HASH_USER == DATA.HASH_USER{
+				MARSHAL, err = json.Marshal(INFORMATION)
+				if err != nil {
+					fmt.Print(err)
+					return shim.Error("Can't Marshal creat ")
+				}
+				if MARSHAL == nil {
+					return shim.Error("Marshal havn't value")
+				}
+			}else{
+				return shim.Error("Permission denied ")
+			}
+		}
+	}
+	// fmt.Println("-------fmt.Print(MARSHAL)-----------")
+	// fmt.Println(MARSHAL)
+	err = stub.PutState(KEY, MARSHAL) /// ของจริงใช้แฮด
+	if err != nil {
+		fmt.Print("err")
+		return shim.Error("can't put stub ")
+	}
+	fmt.Println(linepush)
+	fmt.Println("KEY = " + KEY+"\n" + "reject"   )
+	fmt.Println(line)
+	// Payload := []byte(MARSHAL)
+	// stub.SetEvent("event", Payload) ///เก็บลอง event
+	///////////////////////////// History
+	return shim.Success(MARSHAL)
 }
 //#############################################################################
 //############################### GET #######################################

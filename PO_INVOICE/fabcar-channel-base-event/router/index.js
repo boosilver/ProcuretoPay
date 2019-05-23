@@ -25,8 +25,8 @@ function getUser(key) { // for transfer
 
   });
 }
-function getFORM(key) { // for transfer 
-  let functionName = '[toBC.getFORM(unparsedAttrs)]';
+function getFROM(key) { // for transfer 
+  let functionName = '[toBC.getFROM(unparsedAttrs)]';
 
   return new Promise((resolve, reject) => {
       
@@ -35,10 +35,10 @@ function getFORM(key) { // for transfer
       
       try {
         getuser = {
-              FORM: key.FORM || '',
+              FROM: key.FROM || '',
           }
           resolve([
-            getuser.FORM.toString().toLowerCase(),
+            getuser.FROM.toString().toLowerCase(),
           ])
       } catch (e) {
           logger.error(`${functionName} Parsing attributes failed ${e}`);
@@ -48,7 +48,7 @@ function getFORM(key) { // for transfer
   });
 }
 function getBANK(key) { // for transfer 
-  let functionName = '[toBC.getFORM(unparsedAttrs)]';
+  let functionName = '[toBC.getFROM(unparsedAttrs)]';
 
   return new Promise((resolve, reject) => {
       
@@ -71,13 +71,13 @@ function getBANK(key) { // for transfer
 }
 app.post('/Genkey', function (req, res, next) {
   let functionName = '[API: POST /api/v1/Genkey]';
-  getFORM(req.body).then((getkey) => {
+  getFROM(req.body).then((getkey) => {
   
 }) 
 });
 app.post('/Accept', function (req, res, next) {
   let functionName = '[API: POST /api/v1/Accept]';
-    const bcuserName = req.body.FORM.toLowerCase()
+    const bcuserName = req.body.FROM.toLowerCase()
     console.log(req.body)
 new toBC(bcuserName).Accept(req.body).then((result) => {
     res.status(201);
@@ -98,7 +98,7 @@ new toBC(bcuserName).Accept(req.body).then((result) => {
 //#############################################################################
 app.post('/CreatePO', function (req, res, next) {
   let functionName = '[API: POST /api/v1/CreatePO]';
-    const bcuserName = req.body.FORM.toLowerCase()
+    const bcuserName = req.body.FROM.toLowerCase()
     console.log(req.body)
 new toBC(bcuserName).CreatePO(req.body).then((result) => {
     res.status(201);
@@ -152,7 +152,7 @@ new toBC(bcuserName).GetValue(req.body).then((result) => {
 //#############################################################################
 app.post('/CreateInvoice', function (req, res, next) {
   let functionName = '[API: POST /api/v1/CreateInvoice]';
-    const bcuserName = req.body.FORM.toLowerCase()
+    const bcuserName = req.body.FROM.toLowerCase()
 new toBC(bcuserName).CreateInvoice(req.body).then((result) => {
     res.status(201);
     res.json(result.message);
@@ -190,7 +190,7 @@ new toBC(bcuserName).CheckInvoice(req.body).then((result) => {
 //#############################################################################
 app.post('/Loan', function (req, res, next) {
   let functionName = '[API: POST /api/v1/Loan]';
-    const bcuserName = req.body.FORM.toLowerCase()
+    const bcuserName = req.body.FROM.toLowerCase()
 new toBC(bcuserName).Loan(req.body).then((result) => {
     res.status(201);
     res.json(result.message);
@@ -296,5 +296,23 @@ new toBC(bcuserName).Get_Blockchain(req.body).then((result) => {
   });
   
 }); 
+app.post('/Reject', function (req, res, next) {
+  let functionName = '[API: POST /api/v1/Reject]';
+    const bcuserName = req.body.USER.toLowerCase()
+    logger.debug(bcuserName);
+    new toBC(bcuserName).Reject(req.body).then((result) => {
+      res.status(201);
+      res.json(result.message);
+    })
+      .catch((error) => {
+        logger.error(`${functionName} Failed to check new Service Request: ${error}`);
+        res.status(500);
+        res.json({
+          code: 500,
+          message: `Failed to check new Service Request: ${error}`
+        });
+      });
+
+});
 
 module.exports = app;

@@ -37,7 +37,7 @@ var tx_id = null;
 
 function DATA_NOT_FOUND(INFORMATION) {
     var getkey = {
-        FORM: "lotus",
+        FROM: "lotus",
         BANK: INFORMATION.BANK,
         PO: "data not found",
     };
@@ -115,7 +115,7 @@ Fabric_Client.newDefaultKeyValueStore({
                         if (INFORMATION.TYPE == "PO") {
                             DATABASE = {
                                 TO: INFORMATION.TO.toLowerCase(),
-                                FORM: INFORMATION.FORM.toLowerCase(),
+                                FROM: INFORMATION.FROM.toLowerCase(),
                                 TYPE: INFORMATION.TYPE,
                                 PO_KEY: INFORMATION.PO_KEY,
                                 VALUE: INFORMATION.VALUE,
@@ -124,7 +124,7 @@ Fabric_Client.newDefaultKeyValueStore({
                         } else if (INFORMATION.TYPE == "INVOICE") {
                             DATABASE = {
                                 TO: INFORMATION.TO.toLowerCase(),
-                                FORM: INFORMATION.FORM.toLowerCase(),
+                                FROM: INFORMATION.FROM.toLowerCase(),
                                 TYPE: INFORMATION.TYPE,
                                 INVOICE_KEY: INFORMATION.INVOICE_KEY,
                                 PO_KEY: INFORMATION.PO_KEY,
@@ -170,14 +170,14 @@ Fabric_Client.newDefaultKeyValueStore({
                                     // DATA_NOT_FOUND(INFORMATION)
                                 }
                                 try {
-                                    if (INFORMATION.TO == Verify.TO && INFORMATION.FORM == Verify.FORM && INFORMATION.TYPE == Verify.TYPE
+                                    if (INFORMATION.TO == Verify.TO && INFORMATION.FROM == Verify.FROM && INFORMATION.TYPE == Verify.TYPE
                                         && INFORMATION.INVOICE_KEY == Verify.INVOICE_KEY && INFORMATION.PO_KEY == Verify.PO_KEY && INFORMATION.VALUE == Verify.VALUE && INFORMATION.DATE == Verify.DATE
                                         && INFORMATION.SALT == SALT) { //// เช็คว่าที่ส่งมาตรงกับในดาต้าเบสไหม 
                                         var INFO = "PO"
                                         var PO = await db.DBread("lotus", INFO, `${INFO}_BODY|` + INFORMATION.PO_KEY)
                                         var SALT = await db.DBread("lotus", INFO, `${INFO}_SALT|` + INFORMATION.PO_KEY)
                                         var getkey = {
-                                            FORM: "lotus",
+                                            FROM: "lotus",
                                             BANK: INFORMATION.BANK,
                                             PO: PO,
                                             SALT: SALT,
@@ -208,14 +208,13 @@ Fabric_Client.newDefaultKeyValueStore({
                                     // DATA_NOT_FOUND(INFORMATION)
                                 }
                                 try {
-                                    if (INFORMATION.TO == Verify.TO && INFORMATION.FORM == Verify.FORM && INFORMATION.TYPE == Verify.TYPE
+                                    if (INFORMATION.TO == Verify.TO && INFORMATION.FROM == Verify.FROM && INFORMATION.TYPE == Verify.TYPE
                                         && INFORMATION.INVOICE_KEY == Verify.INVOICE_KEY && INFORMATION.PO_KEY == Verify.PO_KEY && INFORMATION.VALUE == Verify.VALUE && INFORMATION.DATE == Verify.DATE
                                         && INFORMATION.SALT == SALT) { //// เช็คว่าที่ส่งมาตรงกับในดาต้าเบสไหม 
                                         var INFO = "INVOICE"
                                         // console.log(Verify)
-                                        // console.log("---------********---------------3")
                                         var getkey = {
-                                            FORM: "lotus",
+                                            FROM: "lotus",
                                             BANK: INFORMATION.BANK,
                                             PO: Verify,
                                             SALT: SALT,

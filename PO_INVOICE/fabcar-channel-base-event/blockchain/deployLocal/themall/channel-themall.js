@@ -39,7 +39,7 @@ var tx_id = null;
 
 function DATA_NOT_FOUND(INFORMATION) {
     var getkey = {
-        FORM: "themall",
+        FROM: "themall",
         BANK: INFORMATION.BANK,
         PO: "data not found",
     };
@@ -120,7 +120,7 @@ Fabric_Client.newDefaultKeyValueStore({
                         if (INFORMATION.TYPE == "PO") {
                             DATABASE = {
                                 TO: INFORMATION.TO.toLowerCase(),
-                                FORM: INFORMATION.FORM.toLowerCase(),
+                                FROM: INFORMATION.FROM.toLowerCase(),
                                 TYPE: INFORMATION.TYPE,
                                 PO_KEY: INFORMATION.PO_KEY,
                                 VALUE: INFORMATION.VALUE,
@@ -129,7 +129,7 @@ Fabric_Client.newDefaultKeyValueStore({
                         } else if (INFORMATION.TYPE == "INVOICE") {
                             DATABASE = {
                                 TO: INFORMATION.TO.toLowerCase(),
-                                FORM: INFORMATION.FORM.toLowerCase(),
+                                FROM: INFORMATION.FROM.toLowerCase(),
                                 TYPE: INFORMATION.TYPE,
                                 INVOICE_KEY: INFORMATION.INVOICE_KEY,
                                 PO_KEY: INFORMATION.PO_KEY,
@@ -174,14 +174,14 @@ Fabric_Client.newDefaultKeyValueStore({
                                     // DATA_NOT_FOUND(INFORMATION)
                                 }
                                 try {
-                                    if (INFORMATION.TO == Verify.TO && INFORMATION.FORM == Verify.FORM && INFORMATION.TYPE == Verify.TYPE
+                                    if (INFORMATION.TO == Verify.TO && INFORMATION.FROM == Verify.FROM && INFORMATION.TYPE == Verify.TYPE
                                         && INFORMATION.INVOICE_KEY == Verify.INVOICE_KEY && INFORMATION.PO_KEY == Verify.PO_KEY && INFORMATION.VALUE == Verify.VALUE && INFORMATION.DATE == Verify.DATE
                                         && INFORMATION.SALT == SALT) { //// เช็คว่าที่ส่งมาตรงกับในดาต้าเบสไหม 
                                         var INFO = "PO"
                                         var PO = await db.DBread("themall", INFO, `${INFO}_BODY|` + INFORMATION.PO_KEY)
                                         var SALT = await db.DBread("themall", INFO, `${INFO}_SALT|` + INFORMATION.PO_KEY)
                                         var getkey = {
-                                            FORM: "themall",
+                                            FROM: "themall",
                                             BANK: INFORMATION.BANK,
                                             PO: PO,
                                             SALT: SALT,
@@ -196,7 +196,7 @@ Fabric_Client.newDefaultKeyValueStore({
                                                 logger.error(`${functionName} Failed to transfer new Service Request: ${error}`);
 
                                             });
-                                    }else{
+                                    } else {
                                         DATA_NOT_FOUND(INFORMATION)
                                     }
                                 } catch (error) {
@@ -212,14 +212,14 @@ Fabric_Client.newDefaultKeyValueStore({
                                     // DATA_NOT_FOUND(INFORMATION)
                                 }
                                 try {
-                                    if (INFORMATION.TO == Verify.TO && INFORMATION.FORM == Verify.FORM && INFORMATION.TYPE == Verify.TYPE
+                                    if (INFORMATION.TO == Verify.TO && INFORMATION.FROM == Verify.FROM && INFORMATION.TYPE == Verify.TYPE
                                         && INFORMATION.INVOICE_KEY == Verify.INVOICE_KEY && INFORMATION.PO_KEY == Verify.PO_KEY && INFORMATION.VALUE == Verify.VALUE && INFORMATION.DATE == Verify.DATE
                                         && INFORMATION.SALT == SALT) { //// เช็คว่าที่ส่งมาตรงกับในดาต้าเบสไหม 
                                         var INFO = "INVOICE"
                                         // console.log(Verify)
                                         // console.log("---------********---------------3")
                                         var getkey = {
-                                            FORM: "themall",
+                                            FROM: "themall",
                                             BANK: INFORMATION.BANK,
                                             PO: Verify,
                                             SALT: SALT,
@@ -232,9 +232,9 @@ Fabric_Client.newDefaultKeyValueStore({
                                         })
                                             .catch((error) => {
                                                 logger.error(`${functionName} Failed to transfer new Service Request: ${error}`);
-    
+
                                             });
-                                    }else {
+                                    } else {
                                         DATA_NOT_FOUND(INFORMATION)
                                     }
                                 } catch (error) {
@@ -250,12 +250,12 @@ Fabric_Client.newDefaultKeyValueStore({
                             } else if (INFORMATION.TYPE == "ENDORSE_LOAN") {
                                 var Check_Endorse = ""
                                 try {
-                                    Check_Endorse = await db.DBread(INFORMATION.TO.toLowerCase(), INFORMATION.TYPE, `ENDORSE_LOAN_BODY|${INFORMATION.TO.toLowerCase()}|${INFORMATION.BANK.toLowerCase()}` + `${INFORMATION.DOC_LOAN.toLowerCase()}_${INFORMATION.LOAN_KEY}`)
+                                    Check_Endorse = await db.DBread(INFORMATION.TO.toLowerCase(), INFORMATION.TYPE, `ENDORSE_LOAN_BODY|${INFORMATION.TO.toLowerCase()}|${INFORMATION.BANK.toLowerCase()}|` + `${INFORMATION.DOC_LOAN.toLowerCase()}_${INFORMATION.LOAN_KEY}`)
                                 } catch (error) {
                                     // console.log(error)
                                 }
                                 if (!Check_Endorse) {
-                                    await db.DBwrite3(INFORMATION.TO.toLowerCase(), INFORMATION.TYPE, `ENDORSE_LOAN_BODY|${INFORMATION.TO.toLowerCase()}|${INFORMATION.BANK.toLowerCase()}` + `${INFORMATION.DOC_LOAN.toLowerCase()}_${INFORMATION.LOAN_KEY}`, DATABASE, results.KEY)
+                                    await db.DBwrite3(INFORMATION.TO.toLowerCase(), INFORMATION.TYPE, `ENDORSE_LOAN_BODY|${INFORMATION.TO.toLowerCase()}|${INFORMATION.BANK.toLowerCase()}|` + `${INFORMATION.DOC_LOAN.toLowerCase()}_${INFORMATION.LOAN_KEY}`, DATABASE, results.KEY)
                                 }
                             }
                         }
