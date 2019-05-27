@@ -6,9 +6,9 @@
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "admin": "CONFIG_ORG=superuser.json  PORT=7001   node server.js ",
-        "lotus": "CONFIG_ORG=lotus.json PORT=7002   PERMISSION=company node server.js ",
-        "themall": "CONFIG_ORG=themall.json  PORT=7003   PERMISSION=company node server.js",
-        "bank": "CONFIG_ORG=bank.json  PORT=7004   PERMISSION=bank node server.js",
+        "lotus": "CONFIG_ORG=lotus.json USER=lotus PORT=7002   PERMISSION=company node server.js ",
+        "themall": "CONFIG_ORG=themall.json  USER=themall PORT=7003   PERMISSION=company node server.js",
+        "bank": "CONFIG_ORG=bank.json  USER=bank PORT=7004   PERMISSION=bank node server.js",
         "eventlotus": "CONFIG_ORG=lotus.json LOG=NO node ./blockchain/deployLocal/lotus/channel-lotus.js",
         "eventthemall": "CONFIG_ORG=themall.json LOG=NO node ./blockchain/deployLocal/themall/channel-themall.js",
         "eventbank": "CONFIG_ORG=bank.json LOG=NO node ./blockchain/deployLocal/bank/channel-bank.js"

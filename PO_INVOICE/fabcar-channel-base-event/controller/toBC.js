@@ -25,8 +25,10 @@ const CreateInvoice = 'CreateInvoice'; //func
 const PushInBlockchain = 'PushInBlockchain'; //func
 const Loan = 'Loan'; //func
 const Reject = 'Reject'; //func
+const Reject_Invoice = 'Reject_Invoice'; //func
+const Push_B = 'Push_Block'; //func
 const PERMISSION = process.env.PERMISSION;
-
+const PackageUser = process.env.USER;
 //master
 
 /**
@@ -56,7 +58,7 @@ function ParseCheckPO(unparsedAttrs) { //for cheak CheckBalance
                 USER: unparsedAttrs.USER || '',
             }
             resolve([
-                (parsedAttrs.ID).toString(),
+                (parsedAttrs.ID).toString().toLowerCase(),
                 parsedAttrs.USER.toString(),
             ])
         } catch (e) {
@@ -66,7 +68,7 @@ function ParseCheckPO(unparsedAttrs) { //for cheak CheckBalance
 
     });
 }
-function ParseKeyStore(WORLDSTATE_KEY, PUBLIC_KEY) { //for cheak CheckBalance
+function ParseKeyStore(WORLDSTATE_KEY, PUBLIC_KEY, STATUS) { //for cheak CheckBalance
     let functionName = '[toBC.ParseKeyStore(WORLDSTATE_KEY, PUBLIC_KEY)]';
 
     return new Promise((resolve, reject) => {
@@ -78,10 +80,12 @@ function ParseKeyStore(WORLDSTATE_KEY, PUBLIC_KEY) { //for cheak CheckBalance
             parsedAttrs = { //รับมาจาก json
                 WORLDSTATE_KEY: WORLDSTATE_KEY || '',
                 PUBLIC_KEY: PUBLIC_KEY || '',
+                STATUS: STATUS || '',
             }
             resolve([
                 parsedAttrs.WORLDSTATE_KEY.toString(),
-                parsedAttrs.PUBLIC_KEY.toString()
+                parsedAttrs.PUBLIC_KEY.toString(),
+                parsedAttrs.STATUS.toString()
             ])
         } catch (e) {
             logger.error(`${functionName} Parsing attributes failed ${e}`);
@@ -91,19 +95,12 @@ function ParseKeyStore(WORLDSTATE_KEY, PUBLIC_KEY) { //for cheak CheckBalance
     });
 }
 async function Get_Key(getkey, company) {
-    // console.log(getkey)
-    // console.log(company)
-    // console.log("++-+--+-+-+Getkey-+-+-+-+--+-+-+-")
     var result = await blockchain.query(getkey.enrollID, getkey.fcnname, company, INVOKE_ATTRIBUTES)
     console.log("toBC")
-    // console.log("++-+--+-+-+Affter Getkey-+-+-+-+--+-+-+-")
-    // blockchain.query(getkey.enrollID, getkey.fcnname, company, INVOKE_ATTRIBUTES).then((result) => {
     let resultParsed = JSON.parse(result.result.toString('utf8'));
-    // console.log(result)
-    // console.log("++-+--+-+-+Affter Getkey-+-+-+-+--+-+-+-")
     return (resultParsed.PUBLIC_KEY);
 }
-async function Get_Valua(getkey, company) {
+async function Get_Status(getkey, company) {
     // console.log(getkey)
     // console.log(company)
     // console.log("++-+--+-+-+Getkey-+-+-+-+--+-+-+-")
@@ -114,7 +111,23 @@ async function Get_Valua(getkey, company) {
     let resultParsed = JSON.parse(result.result.toString('utf8'));
     // console.log(result)
     // console.log("++-+--+-+-+Affter Getkey-+-+-+-+--+-+-+-")
+    return (resultParsed.STATUS);
+}
+async function Get_Valua(getkey, company) {
+    var result = await blockchain.query(getkey.enrollID, getkey.fcnname, company, INVOKE_ATTRIBUTES)
+    console.log("toBC")
+    let resultParsed = JSON.parse(result.result.toString('utf8'));
+    console.log(resultParsed)
     return (resultParsed);
+}
+async function Push_Block(invokeObject, args) {
+    console.log("Push_Block")
+    console.log(invokeObject)
+    console.log(args)
+    var result = await blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, args, INVOKE_ATTRIBUTES)
+    console.log("toBC")
+    // let resultParsed = JSON.parse(result.result.toString('utf8'));
+    return ;
 }
 
 /**
@@ -147,40 +160,80 @@ class toBC {
         let self = this;
         let functionName = '[toBC.CreatePO(unparsedAttrs)]';
         return new Promise(async (resolve, reject) => {
-            console.log("testttt5555")
-            var CheckValue
-            if (PERMISSION != "company") {
-                CheckValue = "0"
-                reject("permission denied. You can't use this function ")
-            }
-            if (unparsedAttrs.TO.toLowerCase() == unparsedAttrs.FROM.toLowerCase()) {
-                CheckValue = "0"
-                reject("You can't send yourself ")
-            }
-            console.log("testttt5555")
+            var Check
+            var CheckPO
             let invokeObject = {};
             let getkey = {};
             let companydata = {};
+            let args = []
             var DATE = day.getDate() + "-" + (day.getMonth() + 1) + "-" + day.getFullYear();
             var SALT = getRandomInt();
+            if (PERMISSION != "company") {
+                Check = "reject"
+                reject("permission denied. You can't use this function ")
+            }
+            if (unparsedAttrs.TO.toLowerCase() == PackageUser) {
+                Check = "reject"
+                reject("You can't send yourself ")
+            }
+            var HASH_USER = crypto.createHash('sha256')
+            .update(PackageUser)
+            .digest('hex');
+            /////////////////////
+
+            var PO_K = 1
+            var PO_old = 0
+            getkey = {
+                enrollID: self.enrollID,
+                fcnname: GetValue,
+
+            };
+            companydata = ["PO_OLD",
+                PackageUser
+            ]
+            try {
+                PO_old = await Get_Valua(getkey, companydata)  //ไป get key from world
+                // console.log("PO___"+PO_old.VALUE)
+            } catch (error) {
+                // reject("Company not found.")
+                // Check = "reject"
+            }
+            invokeObject = {
+                enrollID: self.enrollID,
+                fcnname: Push_B,
+            };
+            // console.log("PO___"+parseInt('10 lions', PO_old.VALUE))
+            var po_key = Math.floor(PO_K+parseInt('10 lions', PO_old.VALUE))
+            var PO_KEY = po_key.toString()
+            args = ["PO_OLD", PO_KEY
+            ];
+            // console.log("args___"+args)
+            await Push_Block(invokeObject, args)
+            // console.log("55")
+            ////////////////////
+            
             if (unparsedAttrs.VALUE <= 0) {
-                CheckValue = "0"
+                Check = "reject"
                 reject("You can't enter the amount of 0 or less.")
             }
             var parsedAttrs = {
                 TO: unparsedAttrs.TO.toLowerCase() || reject("Company_TO name not found"),
-                FROM: unparsedAttrs.FROM.toLowerCase() || reject("FROM name not found"), //ไปอ่านไฟล์คอนฟิกของบริษัทเราเอง 
+                FROM: PackageUser,
                 TYPE: "PO",
-                PO_KEY: unparsedAttrs.PO_KEY || reject("PO_ID name not found"),
+                PO_KEY: PO_KEY,
+                PRODUCT: unparsedAttrs.PRODUCT.toLowerCase() || reject("PRODUCT name not found"),
+                NUM_PRODUCT: unparsedAttrs.NUM_PRODUCT || reject("NUM_PRODUCT name not found"),
                 VALUE: unparsedAttrs.VALUE || reject("VALUE name not found"),
                 DATE: DATE,
                 SALT: SALT,
             }
             var DATABASE = {
                 TO: unparsedAttrs.TO.toLowerCase() || reject("Company_TO name not found"),
-                FROM: unparsedAttrs.FROM.toLowerCase() || reject("FROM name not found"),
+                FROM: PackageUser,
                 TYPE: "PO",
-                PO_KEY: unparsedAttrs.PO_KEY || reject("PO_ID name not found"),
+                PO_KEY: PO_KEY,
+                PRODUCT: unparsedAttrs.PRODUCT.toLowerCase() || reject("PRODUCT name not found"),
+                NUM_PRODUCT: unparsedAttrs.NUM_PRODUCT || reject("NUM_PRODUCT name not found"),
                 VALUE: unparsedAttrs.VALUE || reject("VALUE name not found"),
                 DATE: DATE,
             }
@@ -196,11 +249,22 @@ class toBC {
 
             };
             companydata = [unparsedAttrs.TO.toLowerCase(),
-            unparsedAttrs.FROM.toLowerCase(),
+                PackageUser
             ]
-            console.log("++-+--+-+-+-+--+-+-+-+-+-+--+-+-+-*******************")
-            var Publickey = await Get_Key(getkey, companydata)  //ไป get key from world
-            console.log("++-+--+-+-+-+--+-+-+-+-+-+--+-+-+-*******************")
+            // console.log("++-+--+-+-+-+--+-+-+-+-+-+--+-+-+-*******************")
+            try {
+                var Publickey = await Get_Key(getkey, companydata)  //ไป get key from world
+                var Status = await Get_Status(getkey, companydata)
+                console.log(Status)
+            } catch (error) {
+                reject("Company not found.")
+                Check = "reject"
+            }
+            if (Status != "company") {
+                reject("You must send to Company only.")
+                Check = "reject"
+            }
+            // console.log("++-+--+-+-+-+--+-+-+-+-+-+--+-+-+-*******************")
             const key = new NodeRSA();
             key.importKey(Publickey.toString(), 'pkcs1-public-pem');
             const ciphertext = key.encrypt(parsedAttrs, 'base64', 'utf8');
@@ -210,20 +274,18 @@ class toBC {
                 .digest('hex');
             console.log('HASH Ciphertext Complete!!! : ', hash)
 
-            var HASH_USER = crypto.createHash('sha256')
-                .update(unparsedAttrs.FROM.toLowerCase())
-                .digest('hex');
-            let args = [hash, ciphertext, HASH_USER
+           
+            args = [hash, ciphertext, HASH_USER
             ];
             var collections = "PO"
-            var CheckPO = "don'have yet"
             try {
-                CheckPO = await db.DBread(unparsedAttrs.FROM.toLowerCase(), collections, "PO_BODY|" + unparsedAttrs.PO_KEY)
-
+                CheckPO = await db.DBread(PackageUser, collections, "PO_BODY|" + PO_KEY)
+                Check = "reject"
+                reject("Already have  PO")
             } catch (error) {
                 // console.log(error)
             }
-            if (CheckPO == "don'have yet" && CheckValue != "0") {
+            if (Check != "reject") {
                 blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, args, INVOKE_ATTRIBUTES).then(async (result) => {
                     let resultParsed = result.result.toString('utf8');
                     // var resultParsed = Buffer.from(JSON.stringify(result.result)); 
@@ -233,17 +295,15 @@ class toBC {
                     console.log("++-+--+-+-+-+--+-+-+-+-+-+--+-+-+-")
                     console.log(ciphertext);
 
-                    console.log(unparsedAttrs.FROM.toLowerCase());
-                    var My_publckey = await db.DBreadPublic(unparsedAttrs.FROM.toLowerCase(), "CompanyData", unparsedAttrs.FROM.toLowerCase())
+                    console.log(PackageUser);
+                    var My_publckey = await db.DBreadPublic(PackageUser, "CompanyData", PackageUser)
                     key.importKey(My_publckey, 'pkcs1-public-pem');
                     const MY_ciphertext = key.encrypt(parsedAttrs, 'base64', 'utf8');
                     var My_hash = crypto.createHash('sha256')          //HASH FUCTION
                         .update(MY_ciphertext)
                         .digest('hex');
-                    // db.DBwrite(unparsedAttrs.FROM, collections, My_hash, MY_ciphertext)
-                    // db.DBwrite(unparsedAttrs.FROM, collections, unparsedAttrs.KEY, My_hash)
-                    db.DBwrite3(unparsedAttrs.FROM.toLowerCase(), collections, "PO_BODY|" + unparsedAttrs.PO_KEY, DATABASE, hash)
-                    db.DBwrite(unparsedAttrs.FROM.toLowerCase(), collections, "PO_SALT|" + unparsedAttrs.PO_KEY, SALT)
+                    db.DBwrite3(PackageUser, collections, "PO_BODY|" + PO_KEY, DATABASE, hash)
+                    db.DBwrite(PackageUser, collections, "PO_SALT|" + PO_KEY, SALT)
 
                     ////////////
                     // db.DBwrite(unparsedAttrs.TO, collections, hash, ciphertext)        /// ให้แก้ไปเก็บลงในต้าเบสของคนที่เราจะส่งให้
@@ -269,12 +329,14 @@ class toBC {
                     resolve({
                         message: {
                             TO: parsedAttrs.TO.toLowerCase(),
-                            FROM: parsedAttrs.FROM.toLowerCase(),
+                            FROM: PackageUser,
                             TYPE: "PO",
-                            PO_KEY: parsedAttrs.PO_KEY,
+                            PO_KEY: PO_KEY,
+                            PRODUCT: unparsedAttrs.PRODUCT.toLowerCase(),
+                            NUM_PRODUCT: unparsedAttrs.NUM_PRODUCT,
                             VALUE: parsedAttrs.VALUE,
                             DATE: parsedAttrs.DATE,
-                            SALT: SALT,
+                            // SALT: SALT,
                         }
                     });
                 }).catch((e) => { /// e เปลี่ยนเป้น err ดีๆ
@@ -282,7 +344,7 @@ class toBC {
                     reject(` ${e}`);
                 });
             } else {
-                reject("Already have  PO")
+                reject("reject")
             }
 
         })
@@ -303,40 +365,78 @@ class toBC {
             let invokeObject = {};
             let getkey = {};
             let companydata = {};
+            let args = []
             var DATE = day.getDate() + "-" + (day.getMonth() + 1) + "-" + day.getFullYear();
             // var SALT = getRandomInt();
+             /////////////////////
+
+             var INVOICE_K = 1
+             var INVOICE_old = 0
+             getkey = {
+                 enrollID: self.enrollID,
+                 fcnname: GetValue,
+ 
+             };
+             companydata = ["INVOICE_OLD",
+                 PackageUser
+             ]
+             try {
+                INVOICE_old = await Get_Valua(getkey, companydata)  //ไป get key from world
+                 // console.log("PO___"+PO_old.VALUE)
+             } catch (error) {
+                 // reject("Company not found.")
+                 // Check = "reject"
+             }
+             invokeObject = {
+                 enrollID: self.enrollID,
+                 fcnname: Push_B,
+             };
+             // console.log("PO___"+parseInt('10 lions', PO_old.VALUE))
+             var invoice_key = Math.floor(INVOICE_K+parseInt('10 lions', INVOICE_old.VALUE))
+             var INVOICE_KEY = invoice_key.toString()
+             args = ["INVOICE_OLD", INVOICE_KEY
+             ];
+             // console.log("args___"+args)
+             await Push_Block(invokeObject, args)
+             // console.log("55")
+             ////////////////////
+
             var parsedAttrs = {
                 TO: unparsedAttrs.TO.toLowerCase() || reject("Company_TO name not found"),
-                FROM: unparsedAttrs.FROM.toLowerCase() || reject("Company_FROM name not found"),
+                FROM: PackageUser,
                 TYPE: "INVOICE",
-                INVOICE_KEY: unparsedAttrs.INVOICE_KEY || reject("INVOICE_KEY name not found"),
+                INVOICE_KEY: INVOICE_KEY,
                 PO_KEY: unparsedAttrs.PO_KEY || reject("POKEY name not found"),
+                PRODUCT: unparsedAttrs.PRODUCT.toLowerCase() || reject("PRODUCT name not found"),
+                NUM_PRODUCT: unparsedAttrs.NUM_PRODUCT || reject("NUM_PRODUCT name not found"),
                 VALUE: unparsedAttrs.VALUE || reject("VALUE name not found"),
                 DATE: DATE,
             }
             var DATABASE = {
                 TO: unparsedAttrs.TO.toLowerCase() || reject("Company_TO name not found"),
-                FROM: unparsedAttrs.FROM.toLowerCase() || reject("Company_FROM name not found"), //ไปอ่านไฟล์คอนฟิกของบริษัทเราเอง 
+                FROM: PackageUser,
                 TYPE: "INVOICE",
-                INVOICE_KEY: unparsedAttrs.INVOICE_KEY || reject("PO_ID name not found"),
+                INVOICE_KEY: INVOICE_KEY,
                 PO_KEY: unparsedAttrs.PO_KEY || reject("POKEY name not found"),
+                PRODUCT: unparsedAttrs.PRODUCT.toLowerCase() || reject("PRODUCT name not found"),
+                NUM_PRODUCT: unparsedAttrs.NUM_PRODUCT || reject("NUM_PRODUCT name not found"),
                 VALUE: unparsedAttrs.VALUE || reject("VALUE name not found"),
                 DATE: DATE,
             }
             var CheckPO = ""
             try {
-                CheckPO = await db.DBread(unparsedAttrs.FROM.toLowerCase(), "PO", "PO_BODY|" + unparsedAttrs.PO_KEY)
+                CheckPO = await db.DBread(PackageUser, "PO", "PO_BODY|" + unparsedAttrs.PO_KEY)
                 console.log("----------PO----------")
                 console.log(CheckPO)
 
             } catch (error) {
                 reject("PO not available")
             }
-            if (CheckPO.TO != unparsedAttrs.FROM.toLowerCase()) {  //ถ้าคนที่สร้างไม่ใช่คนที่ถูกออกใบให้
+            if (CheckPO.TO != PackageUser) {  //ถ้าคนที่สร้างไม่ใช่คนที่ถูกออกใบให้
                 reject(`You can't create Invoice with this PO, You must be ${CheckPO.TO} `)
                 CheckPO = ""
             }
-            if (unparsedAttrs.FROM.toLowerCase() == unparsedAttrs.TO.toLowerCase()) {
+            if (PackageUser == unparsedAttrs.TO.toLowerCase()) {
                 reject(`You can't create Invoice by yourself `)
                 CheckPO = ""
             }
@@ -349,6 +449,14 @@ class toBC {
                 permission_reject = "reject"
                 reject("the value is not equal  ")
             }
+            if (unparsedAttrs.PRODUCT.toLowerCase() != CheckPO.PRODUCT) {
+                permission_reject = "reject"
+                reject("the product is not equal  ")
+            }
+            if (unparsedAttrs.NUM_PRODUCT.toLowerCase() != CheckPO.NUM_PRODUCT) {
+                permission_reject = "reject"
+                reject("the number of product is not equal  ")
+            }
             // var COMPANY = unparsedAttrs.COMPANY
             invokeObject = {
                 enrollID: self.enrollID,
@@ -360,9 +468,20 @@ class toBC {
 
             };
             companydata = [unparsedAttrs.TO.toLowerCase(),
-            unparsedAttrs.FROM.toLowerCase(),
+                PackageUser,
             ]
-            var Publickey = await Get_Key(getkey, companydata)  //ไป get key from world
+            try {
+                var Publickey = await Get_Key(getkey, companydata)  //ไป get key from world
+                var Status = await Get_Status(getkey, companydata)
+                console.log(Status)
+            } catch (error) {
+                reject("Company not found.")
+                permission_reject = "reject"
+            }
+            if (Status != "company") {
+                reject("You must send to Company only.")
+                permission_reject = "reject"
+            }
             const key = new NodeRSA();
             key.importKey(Publickey.toString(), 'pkcs1-public-pem');
             const ciphertext = key.encrypt(parsedAttrs, 'base64', 'utf8');
@@ -372,24 +491,29 @@ class toBC {
                 .digest('hex');
             console.log('HASH Ciphertext Complete!!! : ', hash)
             var HASH_USER = crypto.createHash('sha256')
-                .update(unparsedAttrs.FROM.toLowerCase())
+                .update(PackageUser)
                 .digest('hex');
             try {
-                var Hash_PO = await db.DBreadHash(unparsedAttrs.FROM.toLowerCase(), "PO", "PO_BODY|" + unparsedAttrs.PO_KEY)
+                var Hash_PO = await db.DBreadHash(PackageUser, "PO", "PO_BODY|" + unparsedAttrs.PO_KEY)
             } catch (error) {
                 reject("Can't read hash value from PO. ")
                 CheckPO = ""
             }
-            let args = [hash,
+            args = [hash,
                 ciphertext,
-                unparsedAttrs.INVOICE_KEY,
+                INVOICE_KEY,
                 Hash_PO,
                 HASH_USER,
             ];
             var collections = "INVOICE"
-            var CheckInvoice = "don'have yet"
-
-            if (CheckPO != "" && permission_reject != "reject" && CheckInvoice == "don'have yet") {  /// po ต้องไม่ว่าง และ invoice ยังไม่ถูกใช้
+            try {
+                CheckPO = await db.DBread(PackageUser, collections, "INVOICE_BODY|" + INVOICE_KEY)
+                permission_reject = "reject"
+                reject("Already have  Invoice")   /// มีเลขอินวอยซ้ำไหม
+            } catch (error) {
+                // console.log(error)
+            }
+            if (CheckPO != "" && permission_reject != "reject") {  /// po ต้องไม่ว่าง และ invoice ยังไม่ถูกใช้
                 blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, args, INVOKE_ATTRIBUTES).then(async (result) => {
                     let resultParsed = result.result.toString('utf8');
                     console.log("++-+--+-+-+-+--+-+-+-+-+-+--+-+-+-")
@@ -402,17 +526,19 @@ class toBC {
                     // .update(MY_ciphertext)
                     // .digest('hex');
                     // db.DBwrite(unparsedAttrs.FROM, collections, My_hash, MY_ciphertext)
-                    db.DBwrite3(unparsedAttrs.FROM.toLowerCase(), collections, "INVOICE_BODY|" + unparsedAttrs.INVOICE_KEY, DATABASE, hash)
+                    db.DBwrite3(PackageUser, collections, "INVOICE_BODY|" + INVOICE_KEY, DATABASE, hash)
                     ////////////
 
 
                     resolve({
                         message: {
                             TO: parsedAttrs.TO.toLowerCase(),
-                            FROM: parsedAttrs.FROM.toLowerCase(),
+                            FROM: PackageUser,
                             TYPE: "INVOICE",
-                            INVOICE_KEY: parsedAttrs.INVOICE_KEY,
+                            INVOICE_KEY: INVOICE_KEY,
                             PO_KEY: parsedAttrs.PO_KEY,
+                            PRODUCT: unparsedAttrs.PRODUCT.toLowerCase(),
+                            NUM_PRODUCT: unparsedAttrs.NUM_PRODUCT,
                             VALUE: parsedAttrs.VALUE,
                             DATE: parsedAttrs.DATE,
                         }
@@ -422,7 +548,7 @@ class toBC {
                     reject(` ${e}`);
                 });
             } else {
-                reject(" Already have  Invoice")
+                reject(" reject")
             }
 
         })
@@ -443,8 +569,43 @@ class toBC {
             let companydata = [];
             var collections = ""
             var permission = ""
+            let args = []
             const key = new NodeRSA();
             var DATE = day.getDate() + "-" + (day.getMonth() + 1) + "-" + day.getFullYear();
+
+             /////////////////////
+
+             var LOAN_K = 1
+             var LOAN_old = 0
+             getkey = {
+                 enrollID: self.enrollID,
+                 fcnname: GetValue,
+ 
+             };
+             companydata = ["LOAN_OLD",
+                 PackageUser
+             ]
+             try {
+                LOAN_old = await Get_Valua(getkey, companydata)  //ไป get key from world
+                 // console.log("PO___"+PO_old.VALUE)
+             } catch (error) {
+                 // reject("Company not found.")
+                 // Check = "reject"
+             }
+             invokeObject = {
+                 enrollID: self.enrollID,
+                 fcnname: Push_B,
+             };
+             // console.log("PO___"+parseInt('10 lions', PO_old.VALUE))
+             var loan_key = Math.floor(LOAN_K+parseInt('10 lions', LOAN_old.VALUE))
+             var LOAN_KEY = loan_key.toString()
+             args = ["LOAN_OLD", LOAN_KEY
+             ];
+             // console.log("args___"+args)
+             await Push_Block(invokeObject, args)
+             // console.log("55")
+             ////////////////////
+
             if (unparsedAttrs.DOC_LOAN.toUpperCase() != "PO" && unparsedAttrs.DOC_LOAN.toUpperCase() != "INVOICE") {
                 reject("DOC_LOAN name not found")
             } else collections = unparsedAttrs.DOC_LOAN.toUpperCase()
@@ -452,19 +613,19 @@ class toBC {
             console.log("---------------------------------------------")
             var Check_Loan = ""
             try {
-                Check_Loan = await db.DBread(unparsedAttrs.FROM.toLowerCase(), `LOAN_${collections}`, `LOAN_${collections}_BODY|${unparsedAttrs.FROM.toLowerCase()}|${unparsedAttrs.BANK.toLowerCase()}|` + unparsedAttrs.LOAN_KEY)
+                Check_Loan = await db.DBread(PackageUser, `LOAN_${collections}`, `LOAN_${collections}_BODY|${PackageUser}|${unparsedAttrs.BANK.toLowerCase()}|` + LOAN_KEY)
                 console.log(Check_Loan)
                 console.log("---------------------------------------------")
             } catch (error) {
                 // reject("Loan already been used")
             }
             try {
-                var data = await db.DBread(unparsedAttrs.FROM.toLowerCase(), collections, `${collections}_BODY|` + unparsedAttrs.KEY)
+                var data = await db.DBread(PackageUser, collections, `${collections}_BODY|` + unparsedAttrs.KEY)
             } catch (error) {
                 reject("data not available")
             }
             try {
-                var SALT = await db.DBread(unparsedAttrs.FROM.toLowerCase(), "PO", "PO_SALT|" + data.PO_KEY)
+                var SALT = await db.DBread(PackageUser, "PO", "PO_SALT|" + data.PO_KEY)
             } catch (error) {
                 reject("SALT not available")
                 Check_Loan = "can't"
@@ -472,9 +633,9 @@ class toBC {
             if (collections == "INVOICE") {
                 parsedAttrs = {
                     BANK: unparsedAttrs.BANK.toLowerCase() || reject("Company name not found"),
-                    FROM: unparsedAttrs.FROM.toLowerCase() || reject("FROM name not found"), //ไปอ่านไฟล์คอนฟิกของบริษัทเราเอง 
+                    FROM: PackageUser, 
                     TYPE: `LOAN_${collections}`,
-                    LOAN_KEY: unparsedAttrs.LOAN_KEY || reject("LOAN_KEY name not found"),
+                    LOAN_KEY: LOAN_KEY,
                     PO_KEY: data.PO_KEY,
                     INVOICE_KEY: data.INVOICE_KEY || reject("KEY name not found"),
                     DATE: DATE,
@@ -482,7 +643,7 @@ class toBC {
                     SALT: SALT,
                 }
                 try {
-                    var Hash_DOC = await db.DBreadHash(unparsedAttrs.FROM.toLowerCase(),collections, "INVOICE_BODY|" + unparsedAttrs.KEY)
+                    var Hash_DOC = await db.DBreadHash(PackageUser, collections, "INVOICE_BODY|" + unparsedAttrs.KEY)
                 } catch (error) {
                     reject("Can't read hash value from INVOICE. ")
                     permission_reject = "reject"
@@ -490,21 +651,21 @@ class toBC {
             } else {
                 parsedAttrs = {
                     BANK: unparsedAttrs.BANK.toLowerCase() || reject("Company name not found"),
-                    FROM: unparsedAttrs.FROM.toLowerCase() || reject("FROM name not found"), //ไปอ่านไฟล์คอนฟิกของบริษัทเราเอง 
+                    FROM: PackageUser, 
                     TYPE: `LOAN_${collections}`,
-                    LOAN_KEY: unparsedAttrs.LOAN_KEY || reject("LOAN_KEY name not found"),
+                    LOAN_KEY: LOAN_KEY,
                     PO_KEY: data.PO_KEY,
                     DATE: DATE,
                     PO: data,
                     SALT: SALT,
                 }
                 try {
-                    var Hash_DOC = await db.DBreadHash(unparsedAttrs.FROM.toLowerCase(),collections, "PO_BODY|" + unparsedAttrs.KEY)
+                    var Hash_DOC = await db.DBreadHash(PackageUser, collections, "PO_BODY|" + unparsedAttrs.KEY)
                 } catch (error) {
                     reject("Can't read hash value from PO. ")
                     permission_reject = "reject"
                 }
-                if (unparsedAttrs.FROM.toLowerCase() == data.FROM) {
+                if (PackageUser == data.FROM) {
                     reject("Your are Can't loan by PO")
                     permission = "Can't"
                 }
@@ -523,9 +684,19 @@ class toBC {
 
             };
             companydata = [unparsedAttrs.BANK.toLowerCase(),
-            unparsedAttrs.FROM.toLowerCase(),
-            ]
-            var Publickey = await Get_Key(getkey, companydata)  //ไป get key from world
+                PackageUser            ]
+            try {
+                var Publickey = await Get_Key(getkey, companydata)  //ไป get key from world
+                var Status = await Get_Status(getkey, companydata)
+                console.log(Status)
+            } catch (error) {
+                reject("Bank not found.")
+                permission_reject = "reject"
+            }
+            if (Status != "bank") {
+                reject("You must send to Bank only.")
+                permission_reject = "reject"
+            }
             key.importKey(Publickey.toString(), 'pkcs1-public-pem');
             const ciphertext = key.encrypt(parsedAttrs, 'base64', 'utf8');
             console.log('ciphertext: ', ciphertext);
@@ -534,26 +705,25 @@ class toBC {
                 .digest('hex');
             console.log('HASH Ciphertext Complete!!! : ', hash)
             var HASH_USER = crypto.createHash('sha256')
-                .update(unparsedAttrs.FROM.toLowerCase())
+                .update(PackageUser)
                 .digest('hex');
-            let args = [hash, ciphertext,Hash_DOC, HASH_USER
+            args = [hash, ciphertext, Hash_DOC, HASH_USER
             ];
             var collectionss = `LOAN_${collections}`
             if (!Check_Loan && !permission && permission_reject != "reject") {
                 blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, args, INVOKE_ATTRIBUTES).then(async (result) => {
                     console.log("toBC");
                     let resultParsed = result.result.toString('utf8');
-                    // db.DBwrite(unparsedAttrs.FROM, collectionss, hash, ciphertext)
-                    // db.DBwrite(unparsedAttrs.FROM, collectionss, unparsedAttrs.LOAN_KEY, hash)
-                    console.log(unparsedAttrs.FROM.toLowerCase());
-                    db.DBwrite3(unparsedAttrs.FROM.toLowerCase(), collectionss, `LOAN_${collections}_BODY|${unparsedAttrs.FROM.toLowerCase()}|${unparsedAttrs.BANK.toLowerCase()}|` + unparsedAttrs.LOAN_KEY, parsedAttrs, hash)
+                    console.log(PackageUser);
+                    db.DBwrite3(PackageUser, collectionss, `LOAN_${collections}_BODY|${PackageUser}|${unparsedAttrs.BANK.toLowerCase()}|` + LOAN_KEY, parsedAttrs, hash)
                     resolve({
                         message: {
                             BANK: parsedAttrs.BANK.toLowerCase(),
-                            FROM: parsedAttrs.FROM.toLowerCase(),
+                            FROM: PackageUser,
                             TYPE: parsedAttrs.TYPE,
                             INVOICE_KEY: data.INVOICE_KEY,
                             PO_KEY: data.PO_KEY,
+                            LOAN_KEY: LOAN_KEY,
                             DATE: parsedAttrs.DATE,
                             INVOICE: data,
                             INVOICE2: data.KEY,
@@ -596,13 +766,13 @@ class toBC {
             console.log("---------------------------------------------")
             if (collections == "INVOICE") {
                 try {
-                    var INVOICE = await db.DBread(unparsedAttrs.BANK.toLowerCase() || reject("BANK name not found"), collections, `${collections}_BODY|` + unparsedAttrs.KEY)
+                    var INVOICE = await db.DBread(PackageUser || reject("BANK name not found"), collections, `${collections}_BODY|` + unparsedAttrs.KEY)
                 } catch (error) {
                     reject("Invoice information not available")  /// หาไม่เจอ
                 }
                 if (unparsedAttrs.TO.toLowerCase() == INVOICE.FROM) {
                     try {
-                        var LOAN = await db.DBread(unparsedAttrs.BANK.toLowerCase() || reject("BANK name not found"), `LOAN_${collections}`, `LOAN_${collections}_BODY|${INVOICE.TO.toLowerCase()}|${unparsedAttrs.BANK.toLowerCase()}|` + unparsedAttrs.LOAN_KEY)
+                        var LOAN = await db.DBread(PackageUser || reject("BANK name not found"), `LOAN_${collections}`, `LOAN_${collections}_BODY|${INVOICE.TO.toLowerCase()}|${PackageUser}|` + unparsedAttrs.LOAN_KEY)
                         console.log("LOAN" + LOAN)
                     } catch (error) {
                         check_loan = "can't"
@@ -611,7 +781,7 @@ class toBC {
 
                 } else if (unparsedAttrs.TO.toLowerCase() == INVOICE.TO) {
                     try {
-                        var LOAN = await db.DBread(unparsedAttrs.BANK.toLowerCase() || reject("BANK name not found"), `LOAN_${collections}`, `LOAN_${collections}_BODY|${INVOICE.FROM.toLowerCase()}|${unparsedAttrs.BANK.toLowerCase()}|` + unparsedAttrs.LOAN_KEY)
+                        var LOAN = await db.DBread(PackageUser || reject("BANK name not found"), `LOAN_${collections}`, `LOAN_${collections}_BODY|${INVOICE.FROM.toLowerCase()}|${PackageUser}|` + unparsedAttrs.LOAN_KEY)
                         console.log("LOAN" + LOAN)
                     } catch (error) {
                         check_loan = "can't"
@@ -619,7 +789,7 @@ class toBC {
                     }
                 }
                 try {
-                    var SALT = await db.DBread(unparsedAttrs.BANK.toLowerCase() || reject("BANK name not found"), "PO", "PO_SALT|" + INVOICE.PO_KEY)
+                    var SALT = await db.DBread(PackageUser || reject("BANK name not found"), "PO", "PO_SALT|" + INVOICE.PO_KEY)
                 } catch (error) {
                     reject("Salt not available")
                 }
@@ -628,7 +798,7 @@ class toBC {
                 ///////////////
                 var parsedAttrs = {
                     VERIFY: "Verify",
-                    BANK: unparsedAttrs.BANK.toLowerCase() || reject("BANK name not found"),
+                    BANK: PackageUser,
                     TO: INVOICE.TO.toLowerCase(),
                     FROM: INVOICE.FROM.toLowerCase(),
                     TYPE: INVOICE.TYPE,
@@ -642,7 +812,7 @@ class toBC {
                 }
             } else {
                 try {
-                    var PO = await db.DBread(unparsedAttrs.BANK.toLowerCase() || reject("BANK name not found"), collections, `${collections}_BODY|` + unparsedAttrs.KEY)
+                    var PO = await db.DBread(PackageUser || reject("BANK name not found"), collections, `${collections}_BODY|` + unparsedAttrs.KEY)
                     console.log("PO")
                     console.log(PO)
                 } catch (error) {
@@ -657,7 +827,7 @@ class toBC {
                     try {
                         console.log(unparsedAttrs.TO.toLowerCase())
                         console.log(PO.TO)
-                        var LOAN = await db.DBread(unparsedAttrs.BANK.toLowerCase() || reject("BANK name not found"), `LOAN_${collections}`, `LOAN_${collections}_BODY|${PO.TO.toLowerCase()}|${unparsedAttrs.BANK.toLowerCase()}|` + unparsedAttrs.LOAN_KEY)
+                        var LOAN = await db.DBread(PackageUser || reject("BANK name not found"), `LOAN_${collections}`, `LOAN_${collections}_BODY|${PO.TO.toLowerCase()}|${PackageUser}|` + unparsedAttrs.LOAN_KEY)
                         console.log("LOAN" + LOAN)
                     } catch (error) {
                         check_loan = "can't"
@@ -668,7 +838,7 @@ class toBC {
                     reject(`Please enter the correct company name.did you mean ${PO.TO.toLowerCase()} ?`)
                 }
                 try {
-                    var SALT = await db.DBread(unparsedAttrs.BANK.toLowerCase() || reject("BANK name not found"), "PO", "PO_SALT|" + PO.PO_KEY)
+                    var SALT = await db.DBread(PackageUser || reject("BANK name not found"), "PO", "PO_SALT|" + PO.PO_KEY)
                 } catch (error) {
                     reject("Salt not available")
                 }
@@ -677,7 +847,7 @@ class toBC {
                 ///////////////
                 var parsedAttrs = {
                     VERIFY: "Verify",
-                    BANK: unparsedAttrs.BANK.toLowerCase() || reject("BANK name not found"),
+                    BANK: PackageUser,
                     TO: PO.TO.toLowerCase(),
                     FROM: PO.FROM.toLowerCase(),
                     TYPE: PO.TYPE,
@@ -703,7 +873,7 @@ class toBC {
 
             };
             companydata = [unparsedAttrs.TO.toLowerCase() || reject("COMPANY name not found"),
-            unparsedAttrs.BANK.toLowerCase() || reject("BANK name not found"),
+            PackageUser || reject("BANK name not found"),
             ]
             console.log("------------------xxxxxxxxxxxxxxxxx---------------------------")
             var Publickey = await Get_Key(getkey, companydata)  //ไป get key from world
@@ -715,7 +885,7 @@ class toBC {
                 .digest('hex');
             console.log('HASH Ciphertext Complete!!! : ', hash)
             var HASH_USER = crypto.createHash('sha256')
-                .update(unparsedAttrs.BANK.toLowerCase())
+                .update(PackageUser)
                 .digest('hex');
             let args = [hash, ciphertext, HASH_USER
             ];
@@ -787,21 +957,40 @@ class toBC {
             let getkey = {};
             let companydata = {};
             let Loan_Info = {};
+            var Check_endorse = ""
+            var CHECK = ""
             var DATE = day.getDate() + "-" + (day.getMonth() + 1) + "-" + day.getFullYear();
             var parsedAttrs = {
                 TO: unparsedAttrs.TO || reject("Company name not found"),
-                BANK: unparsedAttrs.BANK || reject("Bank name not found"), //ไปอ่านไฟล์คอนฟิกของบริษัทเราเอง 
+                BANK: PackageUser,
                 TYPE: "ENDORSE_LOAN", // API เจนเอง
                 DOC_LOAN: unparsedAttrs.DOC_LOAN.toUpperCase(),
                 LOAN_KEY: unparsedAttrs.LOAN_KEY || reject("LOAN_KEY name not found"),//INVOICE
                 PRICE_LOAN: unparsedAttrs.PRICE_LOAN || reject("PRICE_LOAN name not found"),
                 DATE: DATE,
             }
-            var Check_endorse = ""
-            var CHECK = ""
+            getkey = {
+                enrollID: self.enrollID,
+                fcnname: GetValue,
+
+            };
+            companydata = [unparsedAttrs.TO,
+                PackageUser            ]
+            try {
+                var Publickey = await Get_Key(getkey, companydata)  //ไป get key from world
+                var Status = await Get_Status(getkey, companydata)
+                console.log(Status)
+            } catch (error) {
+                reject("Company not found.")
+                permission_reject = "reject"
+            }
+            if (Status != "company") {
+                reject("You must send to Bank only.")
+                permission_reject = "reject"
+            }
             try {
                 console.log("error5")
-                Check_endorse = await db.DBread(unparsedAttrs.BANK || reject("Bank name not found"), "ENDORSE_LOAN", `ENDORSE_LOAN_BODY|${unparsedAttrs.TO.toLowerCase()}|${unparsedAttrs.BANK.toLowerCase()}|` + `${unparsedAttrs.DOC_LOAN}_${unparsedAttrs.LOAN_KEY}`)
+                Check_endorse = await db.DBread(PackageUser, "ENDORSE_LOAN", `ENDORSE_LOAN_BODY|${unparsedAttrs.TO.toLowerCase()}|${PackageUser}|` + `${unparsedAttrs.DOC_LOAN}_${unparsedAttrs.LOAN_KEY}`)
                 console.log("error6")
             } catch (error) {
                 console.log("err")
@@ -812,8 +1001,8 @@ class toBC {
             }
             if (unparsedAttrs.DOC_LOAN.toUpperCase() == "INVOICE") {
                 try {
-                    var Check_Invoice = await db.DBread(unparsedAttrs.BANK || reject("Bank name not found"), "LOAN_INVOICE", `LOAN_INVOICE_BODY|${unparsedAttrs.TO.toLowerCase()}|${unparsedAttrs.BANK.toLowerCase()}|` + unparsedAttrs.LOAN_KEY || reject("LOAN_KEY name not found"))
-                    var Invoice = await db.DBread(unparsedAttrs.BANK || reject("Bank name not found"), "INVOICE", `INVOICE_BODY|` + Check_Invoice.INVOICE_KEY)
+                    var Check_Invoice = await db.DBread(PackageUser, "LOAN_INVOICE", `LOAN_INVOICE_BODY|${unparsedAttrs.TO.toLowerCase()}|${PackageUser}|` + unparsedAttrs.LOAN_KEY || reject("LOAN_KEY name not found"))
+                    var Invoice = await db.DBread(PackageUser, "INVOICE", `INVOICE_BODY|` + Check_Invoice.INVOICE_KEY)
                     var WORLD_KEY = unparsedAttrs.TO + "|" + Invoice.INVOICE_KEY + "|" + Invoice.PO_KEY
                     var hash_WORLD_KEY = crypto.createHash('sha256')          //HASH FUCTION
                         .update(WORLD_KEY)
@@ -830,8 +1019,8 @@ class toBC {
 
             } else {
                 try {
-                    var Check_PO = await db.DBread(unparsedAttrs.BANK || reject("Bank name not found"), "LOAN_PO", `LOAN_PO_BODY|${unparsedAttrs.TO.toLowerCase()}|${unparsedAttrs.BANK.toLowerCase()}|` + unparsedAttrs.LOAN_KEY || reject("KEY name not found"))
-                    var PO = await db.DBread(unparsedAttrs.BANK || reject("Bank name not found"), "PO", `PO_BODY|` + Check_PO.PO_KEY)
+                    var Check_PO = await db.DBread(PackageUser, "LOAN_PO", `LOAN_PO_BODY|${unparsedAttrs.TO.toLowerCase()}|${PackageUser}|` + unparsedAttrs.LOAN_KEY || reject("KEY name not found"))
+                    var PO = await db.DBread(PackageUser, "PO", `PO_BODY|` + Check_PO.PO_KEY)
                     var WORLD_KEY = unparsedAttrs.TO + "|" + PO.PO_KEY
                     var hash_WORLD_KEY = crypto.createHash('sha256')          //HASH FUCTION
                         .update(WORLD_KEY)
@@ -852,17 +1041,11 @@ class toBC {
                 enrollID: self.enrollID,
                 fcnname: PushInBlockchain,
             };
-            getkey = {
-                enrollID: self.enrollID,
-                fcnname: GetValue,
-
-            };
+            console.log("555555555555555");
+            console.log(WORLD_KEY);
+            console.log(hash_WORLD_KEY);
             Loan_Info = [hash_WORLD_KEY,
-                unparsedAttrs.BANK,
-            ]
-            companydata = [unparsedAttrs.TO,
-            unparsedAttrs.BANK,
-            ]
+                PackageUser            ]
             // console.log('ciphertext:////////// ');
             // console.log(Loan_Info);
             // console.log(companydata);
@@ -876,7 +1059,6 @@ class toBC {
                 reject("Has already been LOAN")
             }
             console.log('ciphertext:////////// ', Check_loan);
-            var Publickey = await Get_Key(getkey, companydata)  //ไป get key from world
             key.importKey(Publickey.toString(), 'pkcs1-public-pem');
             const ciphertext = key.encrypt(parsedAttrs, 'base64', 'utf8');
             // console.log('ciphertext: ', ciphertext);
@@ -884,7 +1066,7 @@ class toBC {
                 .update(ciphertext)
                 .digest('hex');
             var HASH_USER = crypto.createHash('sha256')
-                .update(unparsedAttrs.BANK.toLowerCase())
+                .update(PackageUser)
                 .digest('hex');
             let args = [hash, ciphertext, HASH_USER
             ];
@@ -892,13 +1074,13 @@ class toBC {
                 blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, args, INVOKE_ATTRIBUTES).then(async (result) => {
                     let resultParsed = result.result.toString('utf8');
                     var collections = "ENDORSE_LOAN"
-                    db.DBwrite3(unparsedAttrs.BANK, collections, `ENDORSE_LOAN_BODY|${unparsedAttrs.TO.toLowerCase()}|${unparsedAttrs.BANK.toLowerCase()}|` + `${unparsedAttrs.DOC_LOAN}_${unparsedAttrs.LOAN_KEY}`, parsedAttrs, hash)
+                    db.DBwrite3(PackageUser, collections, `ENDORSE_LOAN_BODY|${unparsedAttrs.TO.toLowerCase()}|${PackageUser}|` + `${unparsedAttrs.DOC_LOAN}_${unparsedAttrs.LOAN_KEY}`, parsedAttrs, hash)
                     // db.DBwrite3(unparsedAttrs.BANK, collections, `${collections}_BODY|${INFORMATION.BANK}|` +`${unparsedAttrs.DOC_LOAN}_${unparsedAttrs.KEY}`, parsedAttrs,hash)
 
                     resolve({
                         message: {
                             TO: parsedAttrs.TO,
-                            BANK: parsedAttrs.BANK,
+                            BANK: PackageUser,
                             TYPE: parsedAttrs.TYPE,
                             LOAN_KEY: parsedAttrs.LOAN_KEY,
                             PRICE_LOAN: parsedAttrs.PRICE_LOAN,
@@ -928,14 +1110,52 @@ class toBC {
             let invokeObject = {};
             let getkey = {};
             let companydata = {};
+            getkey = {
+                enrollID: self.enrollID,
+                fcnname: GetValue,
+
+            };
+            companydata = [unparsedAttrs.BANK,
+                PackageUser,
+            ]
+            try {
+                var Publickey = await Get_Key(getkey, companydata)  //ไป get key from world
+                var Status = await Get_Status(getkey, companydata)
+                // var Status = await Get_Status(getkey, companydata)
+            } catch (error) {
+                reject("Bank not found.")
+                permission_reject = "reject"
+            }
+            if (Status != "bank") {
+                reject("You must send to Bank only.")
+                permission_reject = "reject"
+            }
+            try {
+                var hash = await db.DBreadHash(PackageUser.toLowerCase(), "ENDORSE_LOAN", `ENDORSE_LOAN_BODY|${PackageUser}|${unparsedAttrs.BANK.toLowerCase()}|${unparsedAttrs.DOC_LOAN.toLowerCase()}_${unparsedAttrs.LOAN_KEY}` )
+            } catch (error) {
+                reject("hash information not available")
+            }
+            try {
+                companydata = [hash,
+                    PackageUser,
+                    ]
+                var StatusReject = await Get_Status(getkey, companydata)  //ไป get key from world
+            } catch (error) {
+                reject(" not found.")
+                permission_reject = "reject"
+            }
+            if (StatusReject == "reject") {
+                reject("This Endorse loan has been reject.")
+                permission_reject = "reject"
+            }
             if (unparsedAttrs.DOC_LOAN.toLowerCase() == "invoice") {
                 console.log("+++++++++++++++++++++++++++++++++++++++++");
                 console.log("INVOICE");
                 try {
                     // var Check_Invoice = await db.DBread(unparsedAttrs.BANK || reject("Bank name not found"), "LOAN_INVOICE", `LOAN_INVOICE_BODY|${unparsedAttrs.TO.toLowerCase()}|${unparsedAttrs.BANK.toLowerCase()}|` + unparsedAttrs.LOAN_KEY || reject("LOAN_KEY name not found"))
 
-                    var Endorse_loan = await db.DBread(unparsedAttrs.FROM.toLowerCase() || reject("Company name not found"), "ENDORSE_LOAN", `ENDORSE_LOAN_BODY|${unparsedAttrs.FROM.toLowerCase()}|${unparsedAttrs.BANK.toLowerCase()}|${unparsedAttrs.DOC_LOAN.toLowerCase()}_${unparsedAttrs.LOAN_KEY}`)
-                    var LOAN_INVOICE = await db.DBread(unparsedAttrs.FROM.toLowerCase() || reject("Bank name not found"), "LOAN_INVOICE", `LOAN_INVOICE_BODY|${unparsedAttrs.FROM.toLowerCase()}|${unparsedAttrs.BANK.toLowerCase()}|` + unparsedAttrs.LOAN_KEY || reject("LOAN_KEY name not found"))
+                    var Endorse_loan = await db.DBread(PackageUser, "ENDORSE_LOAN", `ENDORSE_LOAN_BODY|${PackageUser}|${unparsedAttrs.BANK.toLowerCase()}|${unparsedAttrs.DOC_LOAN.toLowerCase()}_${unparsedAttrs.LOAN_KEY}`)
+                    var LOAN_INVOICE = await db.DBread(PackageUser, "LOAN_INVOICE", `LOAN_INVOICE_BODY|${PackageUser}|${unparsedAttrs.BANK.toLowerCase()}|` + unparsedAttrs.LOAN_KEY || reject("LOAN_KEY name not found"))
                 } catch (error) {
                     reject("Endorse_loan information not available555")
                 }
@@ -946,17 +1166,17 @@ class toBC {
                     reject("Invoice information not available")
                 }
                 try {
-                    var PO = await db.DBread(unparsedAttrs.FROM.toLowerCase() || reject("Company name not found"), "PO", `PO_BODY|` + Invoice.PO_KEY || reject("POKEY not found"))
+                    var PO = await db.DBread(PackageUser, "PO", `PO_BODY|` + Invoice.PO_KEY || reject("POKEY not found"))
                 } catch (error) {
                     reject("Invoice information not available")
                 }
-                var WORLD_KEY = unparsedAttrs.FROM.toLowerCase() + "|" + Invoice.INVOICE_KEY + "|" + Invoice.PO_KEY
+                var WORLD_KEY = PackageUser + "|" + Invoice.INVOICE_KEY + "|" + Invoice.PO_KEY
                 console.log(WORLD_KEY);
             } else {
                 try {
                     console.log("---------------------------------");
-                    var Endorse_loan = await db.DBread(unparsedAttrs.FROM.toLowerCase() || reject("Company name not found"), "ENDORSE_LOAN", `ENDORSE_LOAN_BODY|${unparsedAttrs.FROM.toLowerCase()}|${unparsedAttrs.BANK.toLowerCase()}|${unparsedAttrs.DOC_LOAN.toLowerCase()}_${unparsedAttrs.LOAN_KEY}`)
-                    var LOAN_PO = await db.DBread(unparsedAttrs.FROM.toLowerCase() || reject("Bank name not found"), "LOAN_PO", `LOAN_PO_BODY|${unparsedAttrs.FROM.toLowerCase()}|${unparsedAttrs.BANK.toLowerCase()}|${unparsedAttrs.LOAN_KEY}`)
+                    var Endorse_loan = await db.DBread(PackageUser, "ENDORSE_LOAN", `ENDORSE_LOAN_BODY|${PackageUser}|${unparsedAttrs.BANK.toLowerCase()}|${unparsedAttrs.DOC_LOAN.toLowerCase()}_${unparsedAttrs.LOAN_KEY}`)
+                    var LOAN_PO = await db.DBread(PackageUser, "LOAN_PO", `LOAN_PO_BODY|${PackageUser}|${unparsedAttrs.BANK.toLowerCase()}|${unparsedAttrs.LOAN_KEY}`)
                 } catch (error) {
                     reject("Endorse_loan information not available")
                 }
@@ -965,7 +1185,7 @@ class toBC {
                 } catch (error) {
                     reject("PO information not available")
                 }
-                var WORLD_KEY = unparsedAttrs.FROM + "|" + PO.PO_KEY
+                var WORLD_KEY = PackageUser + "|" + PO.PO_KEY
                 console.log(WORLD_KEY);
             }
 
@@ -974,16 +1194,6 @@ class toBC {
                 fcnname: PushInBlockchain,
             };
             // ///////////////
-            getkey = {
-                enrollID: self.enrollID,
-                fcnname: GetValue,
-
-            };
-            companydata = [unparsedAttrs.BANK,
-            unparsedAttrs.FROM,
-            ]
-            var Publickey = await Get_Key(getkey, companydata)  //ไป get key from world
-            // console.log("++-+--+-+-+-+--+-+-+-+-+-+--+-+-+-*******************"+Publickey)
             const key = new NodeRSA();
             key.importKey(Publickey.toString(), 'pkcs1-public-pem');
             let ciphertext = key.encrypt(Endorse_loan, 'base64', 'utf8');
@@ -1047,7 +1257,6 @@ class toBC {
             companydata = [unparsedAttrs.BANK,
             unparsedAttrs.FROM,
             ]
-            // console.log("++-+--+-+-+-+--+-+-+-+-+-+--+-+-+-*******************")
             var Publickey = await Get_Key(getkey, companydata)  //ไป get key from world
             // console.log("++-+--+-+-+-+--+-+-+-+-+-+--+-+-+-*******************"+Publickey)
             const key = new NodeRSA();
@@ -1057,8 +1266,11 @@ class toBC {
             var hash = crypto.createHash('sha256')          //HASH FUCTION
                 .update(ciphertext)
                 .digest('hex');
+            var hash_PO = crypto.createHash('sha256')          //HASH FUCTION
+                .update(unparsedAttrs.FROM)
+                .digest('hex');
             // console.log('HASH Ciphertext Complete!!! : ', hash)
-            let args = [hash, ciphertext
+            let args = [hash, ciphertext, hash_PO
             ];
             blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, args, INVOKE_ATTRIBUTES).then(async (result) => {
                 let resultParsed = result.result.toString('utf8');
@@ -1079,38 +1291,63 @@ class toBC {
         })
 
     }
+
     Reject(unparsedAttrs) {
         let self = this;
         let functionName = '[toBC.Reject(unparsedAttrs)]';
         return new Promise(async (resolve, reject) => {
             let invokeObject = {};
-            var USER = unparsedAttrs.USER.toLowerCase()
+            var USER = PackageUser
             var TYPE = unparsedAttrs.TYPE.toUpperCase()
             var KEY = unparsedAttrs.KEY
-            invokeObject = {
-                enrollID: self.enrollID,
-                fcnname: Reject,
-            };
-            if(TYPE == "PO"){
+            let args = []
+            if (TYPE == "PO") {
+                invokeObject = {
+                    enrollID: self.enrollID,
+                    fcnname: Reject,
+                };
                 try {
                     var hash = await db.DBreadHash(USER, TYPE, `${TYPE}_BODY|${KEY}`)
                 } catch (error) {
                     reject("PO information not available")
                 }
-            }else if(TYPE == "INVOICE"){
+            } else if (TYPE == "INVOICE") {
+                invokeObject = {
+                    enrollID: self.enrollID,
+                    fcnname: Reject_Invoice,
+                };
+                try {
+                    var Invoice = await db.DBread(USER, TYPE, `${TYPE}_BODY|${KEY}`)
+                } catch (error) {
+                    reject("Invoice information not available")
+                }
                 try {
                     var hash = await db.DBreadHash(USER, TYPE, `${TYPE}_BODY|${KEY}`)
                 } catch (error) {
                     reject("Invoice information not available")
                 }
-            }else {
+                try {
+                    var hash_PO = await db.DBreadHash(USER, "PO", `PO_BODY|${Invoice.PO_KEY}`)
+                } catch (error) {
+                    reject("Hash PO information not available")
+                }
+            } else {
                 reject("PO?  INVOICE?")
             }
             var HASH_USER = crypto.createHash('sha256')   //HASH FUCTION
                 .update(USER)
                 .digest('hex');
-            let args = [hash, TYPE, HASH_USER
-            ];
+            if (TYPE == "PO") {
+                args = [hash, TYPE, HASH_USER
+                ];
+            } else {
+                if (TYPE == "INVOICE") {
+                    args = [hash, TYPE, HASH_USER, hash_PO
+                    ];
+                } else {
+                    reject("PO?  INVOICE? 2")
+                }
+            }
             console.log("-----------------")
             console.log(args)
             console.log("-----------------")
@@ -1118,9 +1355,65 @@ class toBC {
                 let resultParsed = result.result.toString('utf8');
                 resolve({
                     message: {
-                        USER: unparsedAttrs.USER.toLowerCase(),
+                        USER: PackageUser,
                         TYPE: unparsedAttrs.TYPE.toUpperCase(),
                         KEY: unparsedAttrs.KEY,
+                        result: "Reject Success !!"
+                    }
+                });
+            }).catch((e) => { /// e เปลี่ยนเป้น err ดีๆ
+                logger.error(`${functionName}  ${e}`);
+                reject(` ${e}`);
+            });
+        })
+
+    }
+    RejectEndorse(unparsedAttrs) {
+        let self = this;
+        let functionName = '[toBC.RejectEndorse(unparsedAttrs)]';
+        return new Promise(async (resolve, reject) => {
+            let invokeObject = {};
+            var TO = unparsedAttrs.TO.toLowerCase()
+            var USER = PackageUser
+            var TYPE = "ENDORSE_LOAN"
+            var DOC_LOAN = unparsedAttrs.DOC_LOAN.toUpperCase()
+            var LOAN_KEY = unparsedAttrs.LOAN_KEY
+            let args = []
+            invokeObject = {
+                enrollID: self.enrollID,
+                fcnname: Reject,
+            };
+            if (DOC_LOAN == "PO") {
+                try {
+                    var hash = await db.DBreadHash(USER, TYPE, `${TYPE}_BODY|${TO}|${USER}|${DOC_LOAN.toLowerCase()}_${LOAN_KEY}`)
+                } catch (error) {
+                    reject(`${TYPE} PO information not available`)
+                }
+            } else if (DOC_LOAN == "INVOICE") {
+                try {
+                    var hash = await db.DBreadHash(USER, TYPE, `${TYPE}_BODY|${TO}|${USER}|${DOC_LOAN.toLowerCase()}_${LOAN_KEY}`)
+                } catch (error) {
+                    reject(`${TYPE} Invoice information not available`)
+                }
+            } else {
+                reject("PO?  INVOICE?")
+            }
+            var HASH_USER = crypto.createHash('sha256')   //HASH FUCTION
+                .update(USER)
+                .digest('hex');
+                args = [hash, TYPE, HASH_USER
+                ];
+            console.log("-----------------")
+            console.log(args)
+            console.log("-----------------")
+            blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, args, INVOKE_ATTRIBUTES).then(async (result) => {
+                let resultParsed = result.result.toString('utf8');
+                resolve({
+                    message: {
+                        USER: PackageUser,
+                        TYPE: TYPE,
+                        KEY: unparsedAttrs.KEY,
+                        result: "Reject Success !!"
                     }
                 });
             }).catch((e) => { /// e เปลี่ยนเป้น err ดีๆ
@@ -1139,7 +1432,7 @@ class toBC {
 
             let invokeObject = {};
             let data
-            var COMPANY = unparsedAttrs.COMPANY
+            var COMPANY = PackageUser
             ParseCheckPO(unparsedAttrs).then((parsedAttrs) => {
                 console.log('parsedAttrs:' + parsedAttrs);
                 invokeObject = {
@@ -1147,16 +1440,16 @@ class toBC {
                     fcnname: GetValue,
                     attrs: parsedAttrs
                 };
-                console.log("1111111111111111111111111111111111111111");
+                // console.log("1111111111111111111111111111111111111111");
                 console.log(invokeObject);
                 console.log(invokeObject.attrs);
                 blockchain.query(invokeObject.enrollID, invokeObject.fcnname, invokeObject.attrs, INVOKE_ATTRIBUTES).then((result) => {
                     let resultParsed = JSON.parse(result.result.toString('utf8'));
-                    console.log(resultParsed.VALUE + "55555555555555555");
+                    console.log(resultParsed.VALUE );
 
                     resolve({
                         message: { //ค่าที่ ปริ้นออกมาจาก json
-                            User: parsedAttrs[1],
+                            // User: parsedAttrs[1],
                             ID: parsedAttrs[0],
                             VALUE: resultParsed,
 
@@ -1174,9 +1467,9 @@ class toBC {
             });
         });
     }
-    GetPO(unparsedAttrs) {
+    Get(unparsedAttrs) {
         let self = this;
-        let functionName = '[toBC.CheckPO(unparsedAttrs)]';
+        let functionName = '[toBC.Get(unparsedAttrs)]';
         // self.uUID = UUID.generateUUID_RFC4122();
 
         return new Promise((resolve, reject) => {
@@ -1188,11 +1481,11 @@ class toBC {
             ParseCheckPO(unparsedAttrs).then(async (parsedAttrs) => {
                 var ID = unparsedAttrs.KEY
                 var collections = unparsedAttrs.TYPE.toUpperCase()
-                console.log(unparsedAttrs.USER.toLowerCase())
+                console.log(PackageUser)
                 console.log(collections)
                 console.log(`${collections}_BODY|${ID}`)
                 try {
-                    hash = await db.DBreadHash(unparsedAttrs.USER.toLowerCase(), collections, `${collections}_BODY|${ID}`)
+                    hash = await db.DBreadHash(PackageUser, collections, `${collections}_BODY|${ID}`)
                 } catch (error) {
                     reject("Data not found")
                 }
@@ -1218,7 +1511,7 @@ class toBC {
                     // var pemFile = path.resolve(__dirname, `./${COMPANY}/private_key.pem`)
                     // var keyprivate = fs.readFileSync(pemFile)
                     // var publickey = await Get_Key(invokeObject, companydata)
-                    var keyprivate = await db.DBreadprivate(unparsedAttrs.USER.toLowerCase(), "CompanyData", unparsedAttrs.USER.toLowerCase())
+                    var keyprivate = await db.DBreadprivate(PackageUser, "CompanyData", PackageUser)
                     // console.log(keyprivate);
                     key.importKey(keyprivate, 'pkcs1-private-pem');
                     var decrypted
@@ -1331,10 +1624,10 @@ class toBC {
         let functionName = '[toBC.GetValue(unparsedAttrs)]';
         return new Promise(async (resolve, reject) => {
 
-            console.log(unparsedAttrs.COMPANY)
+            console.log(PackageUser)
             console.log(unparsedAttrs.TYPE)
             console.log(`${unparsedAttrs.TYPE}_BODY` + unparsedAttrs.KEY)
-            var VALUE = await db.DBread(unparsedAttrs.COMPANY, unparsedAttrs.TYPE, `${unparsedAttrs.TYPE}_BODY|` + unparsedAttrs.KEY)
+            var VALUE = await db.DBread(PackageUser, unparsedAttrs.TYPE, `${unparsedAttrs.TYPE}_BODY|` + unparsedAttrs.KEY)
             console.log(VALUE);
             console.log("----------------------------------------");
             resolve({
@@ -1356,7 +1649,7 @@ class toBC {
 
             };
             companydata = [unparsedAttrs.KEY,
-            unparsedAttrs.USER.toLowerCase(),
+                PackageUser,
             ]
             console.log(getkey)
             console.log(companydata)
@@ -1384,10 +1677,16 @@ class toBC {
         let functionName = '[toBC.GenerateKeyPair(CompanyInfo)]';
         logger.debug(self.enrollID);
         console.log(self.enrollID);
+        var Check = ""
         return new Promise((resolve, reject) => {
 
             let infokey = keypair.generatekeypair(CompanyInfo.Name.toLowerCase())
             var WorldState_key = (CompanyInfo.Name.toLowerCase())
+            var STATUS = (CompanyInfo.STATUS.toLowerCase())
+            if (STATUS != "company" && STATUS != "bank") {
+                reject("Please input company or bank")
+                Check = "reject"
+            }
             // var WorldState_key = (CompanyInfo.ID + "|" + CompanyInfo.Role)
             // var Companyname = (CompanyInfo.Name)
             console.log('Add local db');
@@ -1396,7 +1695,7 @@ class toBC {
 
 
             let invokeObject = {};
-            ParseKeyStore(WorldState_key, infokey.Public_key).then((parsedAttrs) => {
+            ParseKeyStore(WorldState_key, infokey.Public_key, STATUS).then((parsedAttrs) => {
                 invokeObject = {
                     enrollID: self.enrollID,
                     fcnname: StoreKey,
@@ -1405,35 +1704,37 @@ class toBC {
                 console.log('parsedAttrs:' + parsedAttrs);
 
                 //ทำเป็น  อซิง ไปถาม พีช
-                blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, invokeObject.attrs, INVOKE_ATTRIBUTES).then((result) => {
-                    // let resultParsed = JSON.parse(result.result.toString('utf8'));
-                    // let resultParsed = result.result.toString('utf8');
+                if (Check != "reject") {
+                    blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, invokeObject.attrs, INVOKE_ATTRIBUTES).then((result) => {
+                        // let resultParsed = JSON.parse(result.result.toString('utf8'));
+                        // let resultParsed = result.result.toString('utf8');
 
-                    //DATABASE for admin
-                    db.AdminDBwrite(CompanyInfo.Name.toLowerCase(), infokey.Public_key, infokey.Private_key)
+                        //DATABASE for admin
+                        db.AdminDBwrite(CompanyInfo.Name.toLowerCase(), infokey.Public_key, infokey.Private_key)
 
-                    // db.AdminDBwrite(CompanyInfo.Name, infokey.Public_key, infokey.Private_key)
+                        // db.AdminDBwrite(CompanyInfo.Name, infokey.Public_key, infokey.Private_key)
 
-                    //DATABASE for USER
-                    db.AdminForCom(CompanyInfo.Name.toLowerCase(), infokey.Public_key, infokey.Private_key)
+                        //DATABASE for USER
+                        db.AdminForCom(CompanyInfo.Name.toLowerCase(), infokey.Public_key, infokey.Private_key)
 
-                    resolve({
-                        message: {
-                            CompanyName: CompanyInfo.Name.toLowerCase(),
-                            WorldState_Key: WorldState_key,
-                            Public_Key: infokey.Public_key,
-                            Private_Key: infokey.Privatekey
+                        resolve({
+                            message: {
+                                CompanyName: CompanyInfo.Name.toLowerCase(),
+                                WorldState_Key: WorldState_key,
+                                Public_Key: infokey.Public_key,
+                                Private_Key: infokey.Privatekey,
+                                STATUS: STATUS,
 
 
-                        }
+                            }
+                        });
+                    }).catch((e) => {
+                        logger.error(`${functionName}  ${e}`);
+                        reject(` ${e}`);
                     });
-                }).catch((e) => {
-                    logger.error(`${functionName}  ${e}`);
-                    reject(` ${e}`);
-                });
-
-
-
+                } else {
+                    reject("rect")
+                }
             })
 
         })

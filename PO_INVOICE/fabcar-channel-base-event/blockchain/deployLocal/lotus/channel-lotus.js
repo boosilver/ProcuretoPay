@@ -118,6 +118,8 @@ Fabric_Client.newDefaultKeyValueStore({
                                 FROM: INFORMATION.FROM.toLowerCase(),
                                 TYPE: INFORMATION.TYPE,
                                 PO_KEY: INFORMATION.PO_KEY,
+                                PRODUCT: INFORMATION.PRODUCT,
+                                NUM_PRODUCT: INFORMATION.NUM_PRODUCT,
                                 VALUE: INFORMATION.VALUE,
                                 DATE: INFORMATION.DATE,
                             }
@@ -128,6 +130,8 @@ Fabric_Client.newDefaultKeyValueStore({
                                 TYPE: INFORMATION.TYPE,
                                 INVOICE_KEY: INFORMATION.INVOICE_KEY,
                                 PO_KEY: INFORMATION.PO_KEY,
+                                PRODUCT: INFORMATION.PRODUCT,
+                                NUM_PRODUCT: INFORMATION.NUM_PRODUCT,
                                 VALUE: INFORMATION.VALUE,
                                 DATE: INFORMATION.DATE,
                             }

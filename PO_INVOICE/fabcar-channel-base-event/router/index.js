@@ -2,6 +2,7 @@
 var app = require('express').Router();
 const logger = require('../utils/logger');
 const toBC = require('../controller/toBC');
+const PackageUser = process.env.USER;
 
 function getUser(key) { // for transfer 
   let functionName = '[toBC.ParseCheckUser(unparsedAttrs)]';
@@ -77,9 +78,9 @@ app.post('/Genkey', function (req, res, next) {
 });
 app.post('/Accept', function (req, res, next) {
   let functionName = '[API: POST /api/v1/Accept]';
-    const bcuserName = req.body.FROM.toLowerCase()
+    // const bcuserName = req.body.FROM.toLowerCase()
     console.log(req.body)
-new toBC(bcuserName).Accept(req.body).then((result) => {
+new toBC(PackageUser).Accept(req.body).then((result) => {
     res.status(201);
     res.json(result.message);
   })
@@ -98,9 +99,9 @@ new toBC(bcuserName).Accept(req.body).then((result) => {
 //#############################################################################
 app.post('/CreatePO', function (req, res, next) {
   let functionName = '[API: POST /api/v1/CreatePO]';
-    const bcuserName = req.body.FROM.toLowerCase()
+    // const bcuserName = req.body.FROM.toLowerCase()
     console.log(req.body)
-new toBC(bcuserName).CreatePO(req.body).then((result) => {
+new toBC(PackageUser).CreatePO(req.body).then((result) => {
     res.status(201);
     res.json(result.message);
   })
@@ -113,10 +114,10 @@ new toBC(bcuserName).CreatePO(req.body).then((result) => {
     });
   });
 });
-app.post('/GetPO', function (req, res, next) {
-  let functionName = '[API: POST /api/v1/GetPO]';
-    const bcuserName = req.body.USER.toLowerCase()
-new toBC(bcuserName).GetPO(req.body).then((result) => {
+app.post('/Get', function (req, res, next) {
+  let functionName = '[API: POST /api/v1/Get]';
+    // const bcuserName = req.body.USER.toLowerCase()
+new toBC(PackageUser).Get(req.body).then((result) => {
     res.status(201);
     res.json(result.message);
   })
@@ -132,8 +133,8 @@ new toBC(bcuserName).GetPO(req.body).then((result) => {
 }); 
 app.post('/GetValue', function (req, res, next) {
   let functionName = '[API: POST /api/v1/GetValue]';
-    const bcuserName = req.body.USER.toLowerCase()
-new toBC(bcuserName).GetValue(req.body).then((result) => {
+    // const bcuserName = req.body.USER.toLowerCase()
+new toBC(PackageUser).GetValue(req.body).then((result) => {
     res.status(201);
     res.json(result.message);
   })
@@ -152,8 +153,8 @@ new toBC(bcuserName).GetValue(req.body).then((result) => {
 //#############################################################################
 app.post('/CreateInvoice', function (req, res, next) {
   let functionName = '[API: POST /api/v1/CreateInvoice]';
-    const bcuserName = req.body.FROM.toLowerCase()
-new toBC(bcuserName).CreateInvoice(req.body).then((result) => {
+    // const bcuserName = req.body.FROM.toLowerCase()
+new toBC(PackageUser).CreateInvoice(req.body).then((result) => {
     res.status(201);
     res.json(result.message);
   })
@@ -169,8 +170,8 @@ new toBC(bcuserName).CreateInvoice(req.body).then((result) => {
 });
 app.post('/CheckInvoice', function (req, res, next) {
   let functionName = '[API: POST /api/v1/CheckInvoice]';
-    const bcuserName = req.body.USER.toLowerCase()
-new toBC(bcuserName).CheckInvoice(req.body).then((result) => {
+    // const bcuserName = req.body.USER.toLowerCase()
+new toBC(PackageUser).CheckInvoice(req.body).then((result) => {
     res.status(201);
     res.json(result.message);
   })
@@ -190,8 +191,8 @@ new toBC(bcuserName).CheckInvoice(req.body).then((result) => {
 //#############################################################################
 app.post('/Loan', function (req, res, next) {
   let functionName = '[API: POST /api/v1/Loan]';
-    const bcuserName = req.body.FROM.toLowerCase()
-new toBC(bcuserName).Loan(req.body).then((result) => {
+    // const bcuserName = req.body.FROM.toLowerCase()
+new toBC(PackageUser).Loan(req.body).then((result) => {
     res.status(201);
     res.json(result.message);
   })
@@ -208,8 +209,8 @@ new toBC(bcuserName).Loan(req.body).then((result) => {
 
 app.post('/Request_Verify', function (req, res, next) {
   let functionName = '[API: POST /api/v1/Request_Verify]';
-    const bcuserName = req.body.BANK.toLowerCase()
-new toBC(bcuserName).Request_Verify(req.body).then((result) => {
+    // const bcuserName = req.body.BANK.toLowerCase()
+new toBC(PackageUser).Request_Verify(req.body).then((result) => {
     res.status(201);
     res.json(result.message);
   })
@@ -225,8 +226,8 @@ new toBC(bcuserName).Request_Verify(req.body).then((result) => {
 
 app.post('/endorse_loan', function (req, res, next) {
   let functionName = '[API: POST /api/v1/endorse_loan]';
-    const bcuserName = req.body.BANK.toLowerCase()
-new toBC(bcuserName).endorse_loan(req.body).then((result) => {
+    // const bcuserName = req.body.BANK.toLowerCase()
+new toBC(PackageUser).endorse_loan(req.body).then((result) => {
     res.status(201);
     res.json(result.message);
   })
@@ -246,9 +247,9 @@ new toBC(bcuserName).endorse_loan(req.body).then((result) => {
 
 app.post('/admin/generatekeypair', function (req, res, next) {
   let functionName = '[API: POST /api/v1/admin/generatekeypair]';
-    const bcuserName = req.body.USER.toLowerCase()
-    logger.debug(bcuserName);
-    new toBC(bcuserName).GenerateKeyPair(req.body).then((result) => {
+    // const bcuserName = req.body.USER.toLowerCase()
+    // logger.debug(bcuserName);
+    new toBC(PackageUser).GenerateKeyPair(req.body).then((result) => {
       res.status(201);
       res.json(result.message);
     })
@@ -264,8 +265,8 @@ app.post('/admin/generatekeypair', function (req, res, next) {
 });
 app.post('/Checkkey', function (req, res, next) {
   let functionName = '[API: POST /api/v1/Checkkey]';
-    const bcuserName = req.body.USER.toLowerCase()
-new toBC(bcuserName).Checkkey(req.body).then((result) => {
+    // const bcuserName = req.body.USER.toLowerCase()
+new toBC(PackageUser).Checkkey(req.body).then((result) => {
     res.status(201);
     res.json(result.message);
   })
@@ -281,8 +282,8 @@ new toBC(bcuserName).Checkkey(req.body).then((result) => {
 }); 
 app.post('/Get_Blockchain', function (req, res, next) {
   let functionName = '[API: POST /api/v1/Get_Blockchain]';
-    const bcuserName = req.body.USER.toLowerCase()
-new toBC(bcuserName).Get_Blockchain(req.body).then((result) => {
+    // const bcuserName = req.body.USER.toLowerCase()
+new toBC(PackageUser).Get_Blockchain(req.body).then((result) => {
     res.status(201);
     res.json(result.message);
   })
@@ -298,9 +299,27 @@ new toBC(bcuserName).Get_Blockchain(req.body).then((result) => {
 }); 
 app.post('/Reject', function (req, res, next) {
   let functionName = '[API: POST /api/v1/Reject]';
-    const bcuserName = req.body.USER.toLowerCase()
-    logger.debug(bcuserName);
-    new toBC(bcuserName).Reject(req.body).then((result) => {
+    // const bcuserName = req.body.USER.toLowerCase()
+    // logger.debug(bcuserName);
+    new toBC(PackageUser).Reject(req.body).then((result) => {
+      res.status(201);
+      res.json(result.message);
+    })
+      .catch((error) => {
+        logger.error(`${functionName} Failed to check new Service Request: ${error}`);
+        res.status(500);
+        res.json({
+          code: 500,
+          message: `Failed to check new Service Request: ${error}`
+        });
+      });
+
+});
+app.post('/RejectEndorse', function (req, res, next) {
+  let functionName = '[API: POST /api/v1/RejectEndorse]';
+    // const bcuserName = req.body.USER.toLowerCase()
+    // logger.debug(bcuserName);
+    new toBC(PackageUser).RejectEndorse(req.body).then((result) => {
       res.status(201);
       res.json(result.message);
     })
