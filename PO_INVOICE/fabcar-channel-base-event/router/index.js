@@ -334,4 +334,22 @@ app.post('/RejectEndorse', function (req, res, next) {
 
 });
 
+app.post('/GetList', function (req, res, next) {
+  let functionName = '[API: POST /api/v1/GetList]';
+    // const bcuserName = req.body.USER.toLowerCase()
+new toBC(PackageUser).GetList().then((result) => {
+    res.status(201);
+    res.json(result.message);
+  })
+  .catch((error) => {
+    logger.error(`${functionName} Failed to check new Service Request: ${error}`);
+    res.status(500);
+    res.json({
+      code: 500,
+      message: `Failed to check new Service Request: ${error}`
+    });
+  });
+  
+}); 
+
 module.exports = app;

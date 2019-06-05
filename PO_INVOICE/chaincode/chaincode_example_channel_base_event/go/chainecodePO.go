@@ -36,6 +36,9 @@ type INFORMATION struct {
 	HASH_USER string `json:"HASH_USER"`
 	STATUS string `json:"STATUS"`
 }
+type REJECT_KEY struct {
+	VALUE string `json:"VALUE"`
+}
 type STORE_KEY struct {
 	COMPANYNAME string `json:"COMPANYNAME"`
 	PUBLIC_KEY     string `json:"PUBLIC_KEY"`
@@ -484,15 +487,18 @@ func (t *FundTransferChaincode) Reject_Invoice(stub shim.ChaincodeStubInterface,
 	var TYPE string /// สิ่งที่เราจะลบ (เอาไว้เลือกสตัก)
 	var HASH_USER string /// hash user ของเราที่จะทำ
 	var HASH_PO string
-	if len(args) != 4 {
+	var VALUE string // ข้อมูลที่ส่งไปบอกคู่ค้าว่าเราจะรีเจค
+	if len(args) != 5 {
 		return shim.Error("Incorrect number of arguments  ")
 	}
 	KEY = args[0]   
 	TYPE = args[1]  
 	HASH_USER = args[2]   
 	HASH_PO = args[3]   
+	VALUE = args[4]
 	var PO_DATA = PO_INFORMATION{}      
 	var INVOICE_DATA = INVOICE_INFORMATION{} 
+	// var REJECT_KEY = REJECT_KEY{} 
 	var MARSHAL []byte
 	var PO_MARSHAL []byte
 	CHEACK_KEY, err := stub.GetState(KEY) 
@@ -575,6 +581,23 @@ func (t *FundTransferChaincode) Reject_Invoice(stub shim.ChaincodeStubInterface,
 	fmt.Println(linepush)
 	fmt.Println("KEY = " + KEY+"\n" + "reject"   )
 	fmt.Println(line)
+
+	////////////////
+	fmt.Println("VALUE---"+VALUE)
+	var REJECT_KEY = REJECT_KEY{ 
+		VALUE: 			VALUE,
+	}
+	MARSHAL_VALUSE, err := json.Marshal(REJECT_KEY)
+	if err != nil {
+		fmt.Print(err)
+		return shim.Error("Can't Marshal creat ")
+	}
+	if MARSHAL_VALUSE == nil {
+		return shim.Error("Marshal havn't value")
+	}
+	Payload := []byte(MARSHAL_VALUSE)
+	stub.SetEvent("event", Payload) ///เก็บลอง event
+	//////////////////////////////////////
 	// Payload := []byte(MARSHAL)
 	// stub.SetEvent("event", Payload) ///เก็บลอง event
 	///////////////////////////// History

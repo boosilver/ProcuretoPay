@@ -1,5 +1,6 @@
 {
     "blockchain": {
+        "address": "CompanyA of Thailand 11600  New Petchaburi Rd. Khwaeng Makkasan Khet Ratchathewi Bangkok 10400 Thailand",
         "type": "hlfv1",
         "orderers": [{
             "url": "grpc://localhost:7050",
@@ -31,5 +32,6 @@
             "enrollmentSecret": "adminpw"
         },
         "timeout": 300000
+       
     }
 }

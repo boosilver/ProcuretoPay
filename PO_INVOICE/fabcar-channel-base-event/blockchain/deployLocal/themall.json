@@ -1,5 +1,6 @@
 {
     "blockchain": {
+        "address": "CompanyB of Thailand 11500   Lat Phrao Rd. Khwaeng Klong Chan Khet Bang Kapi Bangkok 10500 Thailand",
         "type": "hlfv1",
         "orderers": [{
             "url": "grpc://localhost:7050",

@@ -118,10 +118,21 @@ Fabric_Client.newDefaultKeyValueStore({
                                 FROM: INFORMATION.FROM.toLowerCase(),
                                 TYPE: INFORMATION.TYPE,
                                 PO_KEY: INFORMATION.PO_KEY,
+                                ADDRESS: INFORMATION.ADDRESS,
+                                EMAIL: INFORMATION.EMAIL,
+                                TEL_NUMBER: INFORMATION.TEL_NUMBER,
+                                TAX_ID: INFORMATION.TAX_ID,
+                                DELIVERY_ADDRESS: INFORMATION.DELIVERY_ADDRESS,
                                 PRODUCT: INFORMATION.PRODUCT,
                                 NUM_PRODUCT: INFORMATION.NUM_PRODUCT,
                                 VALUE: INFORMATION.VALUE,
+                                PRICE: INFORMATION.PRICE,
+                                VAT: INFORMATION.VAT,
+                                TOTAL_PRICE: INFORMATION.TOTAL_PRICE,
                                 DATE: INFORMATION.DATE,
+                                DELIVERY_DATE: INFORMATION.DELIVERY_DATE,
+                                PAYMENT: INFORMATION.PAYMENT,
+                                DETAIL: INFORMATION.DETAIL,
                             }
                         } else if (INFORMATION.TYPE == "INVOICE") {
                             DATABASE = {
@@ -130,10 +141,21 @@ Fabric_Client.newDefaultKeyValueStore({
                                 TYPE: INFORMATION.TYPE,
                                 INVOICE_KEY: INFORMATION.INVOICE_KEY,
                                 PO_KEY: INFORMATION.PO_KEY,
-                                PRODUCT: INFORMATION.PRODUCT,
+                                ADDRESS: INFORMATION.ADDRESS,
+                                EMAIL: INFORMATION.EMAIL,
+                                TEL_NUMBER: INFORMATION.TEL_NUMBER,
+                                TAX_ID: INFORMATION.TAX_ID,
+                                DELIVERY_ADDRESS: INFORMATION.DELIVERY_ADDRESS,
+                                PRODUCT: INFORMATION.PRODUCT.toLowerCase(),
                                 NUM_PRODUCT: INFORMATION.NUM_PRODUCT,
                                 VALUE: INFORMATION.VALUE,
+                                PRICE: INFORMATION.PRICE,
+                                VAT: INFORMATION.VAT,
+                                TOTAL_PRICE: INFORMATION.TOTAL_PRICE,
                                 DATE: INFORMATION.DATE,
+                                DELIVERY_DATE: INFORMATION.DELIVERY_DATE,
+                                PAYMENT: INFORMATION.PAYMENT,
+                                DETAIL: INFORMATION.DETAIL,
                             }
                         } else if (INFORMATION.TYPE == "ENDORSE_LOAN") {
                             DATABASE = {
@@ -194,9 +216,9 @@ Fabric_Client.newDefaultKeyValueStore({
                                         })
                                             .catch((error) => {
                                                 logger.error(`${functionName} Failed to transfer new Service Request: ${error}`);
-    
+
                                             });
-                                    }else {
+                                    } else {
                                         DATA_NOT_FOUND(INFORMATION)
                                     }
                                 } catch (error) {
@@ -233,7 +255,7 @@ Fabric_Client.newDefaultKeyValueStore({
                                                 logger.error(`${functionName} Failed to transfer new Service Request: ${error}`);
 
                                             });
-                                    }else{
+                                    } else {
                                         DATA_NOT_FOUND(INFORMATION)
                                     }
                                 } catch (error) {
@@ -242,10 +264,12 @@ Fabric_Client.newDefaultKeyValueStore({
                             }
                         } else if (!checkID) {
                             if (INFORMATION.TYPE == "PO") {
-                                await db.DBwrite3(INFORMATION.TO.toLowerCase(), INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.PO_KEY, DATABASE, results.KEY)
+                                await db.DBwrite4(INFORMATION.TO.toLowerCase(), INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.PO_KEY, DATABASE, results.KEY, "WAIT")
                                 await db.DBwrite(INFORMATION.TO.toLowerCase(), INFORMATION.TYPE, `${INFORMATION.TYPE}_SALT|` + INFORMATION.PO_KEY, INFORMATION.SALT)
                             } else if (INFORMATION.TYPE == "INVOICE") {
-                                await db.DBwrite3(INFORMATION.TO.toLowerCase(), INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.INVOICE_KEY, DATABASE, results.KEY)
+                                await db.DBwrite4(INFORMATION.TO.toLowerCase(), INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.INVOICE_KEY, DATABASE, results.KEY, "WAIT")
+                                var ID = "PO_BODY|" + INFORMATION.PO_KEY
+                                db.SetStatusComplete(INFORMATION.TO.toLowerCase(),"PO",ID)
                             } else if (INFORMATION.TYPE == "ENDORSE_LOAN") {
                                 var Check_Endorse = ""
                                 try {
@@ -254,7 +278,7 @@ Fabric_Client.newDefaultKeyValueStore({
                                     // console.log(error)
                                 }
                                 if (!Check_Endorse) {
-                                    await db.DBwrite3(INFORMATION.TO.toLowerCase(), INFORMATION.TYPE, `ENDORSE_LOAN_BODY|${INFORMATION.TO.toLowerCase()}|${INFORMATION.BANK.toLowerCase()}|` + `${INFORMATION.DOC_LOAN.toLowerCase()}_${INFORMATION.LOAN_KEY}`, DATABASE, results.KEY)
+                                    await db.DBwrite4(INFORMATION.TO.toLowerCase(), INFORMATION.TYPE, `ENDORSE_LOAN_BODY|${INFORMATION.TO.toLowerCase()}|${INFORMATION.BANK.toLowerCase()}|` + `${INFORMATION.DOC_LOAN.toLowerCase()}_${INFORMATION.LOAN_KEY}`, DATABASE, results.KEY, "WAIT")
                                 }
                             }
                         }

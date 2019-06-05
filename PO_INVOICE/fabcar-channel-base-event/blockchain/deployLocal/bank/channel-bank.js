@@ -141,7 +141,7 @@ Fabric_Client.newDefaultKeyValueStore({
                             if (!checkID) {
                                 // db.DBwrite(INFORMATION.BANK,INFORMATION.TYPE , results.KEY, results.VALUE) //เก็บแฮด คู่ เอ็นคลิบ
                                 if (INFORMATION.TYPE == "LOAN_INVOICE") {
-                                    db.DBwrite3(INFORMATION.BANK, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|${INFORMATION.FROM.toLowerCase()}|${INFORMATION.BANK.toLowerCase()}|` + INFORMATION.LOAN_KEY, INFORMATION, results.KEY) //เก็บข้อมูลใบกู้
+                                    db.DBwrite4(INFORMATION.BANK, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|${INFORMATION.FROM.toLowerCase()}|${INFORMATION.BANK.toLowerCase()}|` + INFORMATION.LOAN_KEY, INFORMATION, results.KEY, "WAIT") //เก็บข้อมูลใบกู้
                                     var Check_Invoice = ""
                                     var Check_Salt = ""
                                     try {
@@ -161,7 +161,7 @@ Fabric_Client.newDefaultKeyValueStore({
                                         db.DBwrite(INFORMATION.BANK, "PO", `PO_SALT|` + LOAN.INVOICE.PO_KEY, LOAN.SALT)
                                     }
                                 } else {
-                                    db.DBwrite3(INFORMATION.BANK, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|${INFORMATION.FROM.toLowerCase()}|${INFORMATION.BANK.toLowerCase()}|` + INFORMATION.LOAN_KEY, INFORMATION, results.KEY) //เก็บข้อมูลใบกู้
+                                    db.DBwrite4(INFORMATION.BANK, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|${INFORMATION.FROM.toLowerCase()}|${INFORMATION.BANK.toLowerCase()}|` + INFORMATION.LOAN_KEY, INFORMATION, results.KEY, "WAIT") //เก็บข้อมูลใบกู้
                                     var Check_PO = ""
                                     var Check_Salt = ""
                                     try {

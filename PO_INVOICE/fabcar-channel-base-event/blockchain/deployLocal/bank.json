@@ -1,5 +1,6 @@
 {
     "blockchain": {
+        "address": "BankA of Thailand 16600   Ramkhumhaeng Rd. Khwaeng Tambon Klongkum Khet Amphur Bungkum Bangkok 10600 Thailand",
         "type": "hlfv1",
         "orderers": [{
             "url": "grpc://localhost:7050",

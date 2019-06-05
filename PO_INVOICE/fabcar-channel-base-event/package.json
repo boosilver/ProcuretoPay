@@ -5,7 +5,7 @@
     "main": "fabcar.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "admin": "CONFIG_ORG=superuser.json  PORT=7001   node server.js ",
+        "admin": "CONFIG_ORG=superuser.json USER=superuser PORT=7001   node server.js ",
         "lotus": "CONFIG_ORG=lotus.json USER=lotus PORT=7002   PERMISSION=company node server.js ",
         "themall": "CONFIG_ORG=themall.json  USER=themall PORT=7003   PERMISSION=company node server.js",
         "bank": "CONFIG_ORG=bank.json  USER=bank PORT=7004   PERMISSION=bank node server.js",
