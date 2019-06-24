@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #superuser
-cd superuser
+cd bankA
 
 # clean the keystore
 rm -rf ./hfc-key-store
@@ -37,7 +37,7 @@ node registerUser.js
 cd ..
 
 #bank
-cd bank
+cd bankB
 
 # clean the keystore
 rm -rf ./hfc-key-store
@@ -46,27 +46,27 @@ rm -rf ./hfc-key-store
 node enrollAdmin.js
 node registerUser.js
 
-cd ..
+# cd ..
 
-#user5
-cd user5
+# #user5
+# cd user5
 
-# clean the keystore
-rm -rf ./hfc-key-store
+# # clean the keystore
+# rm -rf ./hfc-key-store
 
-#enrollAdmin and registerUser
-node enrollAdmin.js
-node registerUser.js
+# #enrollAdmin and registerUser
+# node enrollAdmin.js
+# node registerUser.js
 
-cd ..
+# cd ..
 
-#user6
-cd user6
+# #user6
+# cd user6
 
-# clean the keystore
-rm -rf ./hfc-key-store
+# # clean the keystore
+# rm -rf ./hfc-key-store
 
-#enrollAdmin and registerUser
-node enrollAdmin.js
-node registerUser.js
+# #enrollAdmin and registerUser
+# node enrollAdmin.js
+# node registerUser.js
 

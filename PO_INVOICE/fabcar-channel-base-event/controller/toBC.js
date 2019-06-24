@@ -15,7 +15,7 @@ var url = "mongodb://localhost:27017/mydb";
 const keypair = require('../utils/generatekeypair');
 const hash = require('../utils/hash');
 const StoreKey = 'StoreKey'; //func
-const db = require('../utils/utilsdb')
+const db = require('../utils/utilsdb');
 const CONFIG_ORG = process.env.CONFIG_ORG;
 const myconfig = require(`../blockchain/deployLocal/${CONFIG_ORG}`)
 /////chaincode
@@ -29,6 +29,25 @@ const Loan = 'Loan'; //func
 const Reject = 'Reject'; //func
 const Reject_Invoice = 'Reject_Invoice'; //func
 const Push_B = 'Push_Block'; //func
+const Succes_Invoice = 'Succes_Invoice'; //func
+const AUTO_PushInBlockchain = 'AUTO_PushInBlockchain'; //func
+var Fabric_Client = require('fabric-client');
+var util = require('util');
+var os = require('os');
+var ChannelEventArray = []
+//
+var fabric_client = new Fabric_Client();
+var peer = fabric_client.newPeer('grpc://localhost:10051');
+var order = fabric_client.newOrderer('grpc://localhost:10050')
+
+// setup the fabric network
+// var channel = fabric_client.newChannel('privatechannel1');
+//  var channel2 = fabric_client.newChannel('privatechannel2');
+var channelArray = []
+const chaincodeid = "fabcar"
+const chaincodeEventName = "auto_event"
+var channel
+
 const PERMISSION = process.env.PERMISSION;
 const PackageUser = process.env.USER;
 //master
@@ -41,6 +60,67 @@ const PackageUser = process.env.USER;
  * @param {object} unparsedAttrs - New ServiceRequest Object
 
  */
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+'use strict';
+
+/*
+ * Chaincode Invoke
+ */
+if (PackageUser == "bank") {
+
+
+    var member_user = null;
+    var store_path = path.join(__dirname, `../blockchain/deployLocal/${PackageUser}/hfc-key-store`);
+    console.log('Store path:' + store_path);
+    var tx_id = null;
+
+    // create the key value store as defined in the fabric-client/config/default.json 'key-value-store' setting
+    Fabric_Client.newDefaultKeyValueStore({
+        path: store_path
+    }).then((state_store) => {
+        // assign the store to the fabric client
+        fabric_client.setStateStore(state_store);
+        var crypto_suite = Fabric_Client.newCryptoSuite();
+        // use the same location for the state store (where the users' certificate are kept)
+        // and the crypto store (where the users' keys are kept)
+        var crypto_store = Fabric_Client.newCryptoKeyStore({ path: store_path });
+        crypto_suite.setCryptoKeyStore(crypto_store);
+        fabric_client.setCryptoSuite(crypto_suite);
+
+        // get the enrolled user from persistence, this user will sign all requests
+        return fabric_client.getUserContext(`${PackageUser}`, true);
+    }).then((user_from_store) => {
+        if (user_from_store && user_from_store.isEnrolled()) {
+            console.log('Successfully loaded bank from persistence');
+            member_user = user_from_store;
+        } else {
+            throw new Error('Failed to get lotus.... run registerUser.js');
+        }
+
+        return 1
+    }).then((results) => {
+
+        //  console.log(`${element.channel_id}`);
+        channel = fabric_client.newChannel("mychannel")
+
+
+        channel.addPeer(peer)
+        channel.addOrderer(order)
+        ///localhost org1 peer0 
+
+        return "ORG1 Privatechannel1"
+    }).then((results) => {
+        //message start block
+        console.log(results)
+    }).catch((err) => {
+        console.error('Failed to invoke successfully :: ' + err);
+    });
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 var day = new Date();
 String.prototype.replaceAt = function (index, char) {
     return this.substr(0, index) + char + this.substr(index + char.length);
@@ -408,7 +488,7 @@ class toBC {
                     var My_hash = crypto.createHash('sha256')          //HASH FUCTION
                         .update(MY_ciphertext)
                         .digest('hex');
-                    db.DBwrite4(PackageUser, collections, "PO_BODY|" + PO_KEY, DATABASE, hash, "WAIT")
+                    db.DBwrite5(PackageUser, collections, "PO_BODY|" + PO_KEY, DATABASE, hash, "WAIT", PackageUser)
                     db.DBwrite(PackageUser, collections, "PO_SALT|" + PO_KEY, SALT)
 
                     ////////////
@@ -672,7 +752,7 @@ class toBC {
                     // .update(MY_ciphertext)
                     // .digest('hex');
                     // db.DBwrite(unparsedAttrs.FROM, collections, My_hash, MY_ciphertext)
-                    db.DBwrite4(PackageUser, collections, "INVOICE_BODY|" + INVOICE_KEY, DATABASE, hash, "WAIT")
+                    db.DBwrite5(PackageUser, collections, "INVOICE_BODY|" + INVOICE_KEY, DATABASE, hash, "WAIT", PackageUser)
                     var key = "PO_BODY|" + unparsedAttrs.PO_KEY
                     db.SetStatusComplete(PackageUser, "PO", key)
                     ////////////
@@ -825,6 +905,16 @@ class toBC {
                     reject("Can't read hash value from INVOICE. ")
                     permission_reject = "reject"
                 }
+                // try {
+                //     var status = await db.DBreadStatus(PackageUser, collections, "INVOICE_BODY|" + unparsedAttrs.KEY)
+                // } catch (error) {
+                //     reject("Can't read status value from invoice. ")
+                //     permission_reject = "reject"
+                // }
+                // if (status != "COMPLETE") {
+                //     reject("This invoice  not complete.")
+                //     permission = "Can't"
+                // }         
             } else {
                 parsedAttrs = {
                     BANK: unparsedAttrs.BANK.toLowerCase() || reject("Company name not found"),
@@ -854,6 +944,16 @@ class toBC {
                 }
                 if (PackageUser == data.FROM) {
                     reject("Your are Can't loan by PO")
+                    permission = "Can't"
+                }
+                try {
+                    var status = await db.DBreadStatus(PackageUser, collections, "PO_BODY|" + unparsedAttrs.KEY)
+                } catch (error) {
+                    reject("Can't read status value from PO. ")
+                    permission_reject = "reject"
+                }
+                if (status == "COMPLETE") {
+                    reject("This PO has COMPLETE")
                     permission = "Can't"
                 }
             }
@@ -902,7 +1002,7 @@ class toBC {
                     console.log("toBC");
                     let resultParsed = result.result.toString('utf8');
                     console.log(PackageUser);
-                    db.DBwrite4(PackageUser, collectionss, `LOAN_${collections}_BODY|${PackageUser}|${unparsedAttrs.BANK.toLowerCase()}|` + LOAN_KEY, parsedAttrs, hash, "WAIT")
+                    db.DBwrite5(PackageUser, collectionss, `LOAN_${collections}_BODY|${PackageUser}|${unparsedAttrs.BANK.toLowerCase()}|` + LOAN_KEY, parsedAttrs, hash, "WAIT", PackageUser)
                     resolve({
                         message: {
                             BANK: parsedAttrs.BANK.toLowerCase(),
@@ -1115,46 +1215,85 @@ class toBC {
                 .digest('hex');
             let args = [hash, ciphertext, HASH_USER
             ];
+            var INFORMATION
             console.log("-------------------------------------------");
             console.log(args + "Testttttttttttttttttttttttttttt");
             if (!check_loan && permission_reject != "reject") {
-                blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, args, INVOKE_ATTRIBUTES).then((result) => {
+                blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, args, INVOKE_ATTRIBUTES).then(async (result) => {
                     console.log("toBC");
                     let resultParsed = result.result.toString('utf8');
-                    // db.DBwrite(unparsedAttrs.FROM, collections, hash, ciphertext)
-                    // db.DBwrite(unparsedAttrs.FROM, collections, unparsedAttrs.LOAN_KEY, hash)
-                    if (collections == "INVOICE") {
-                        resolve({
-                            message: {
-                                LOAN_KEY: unparsedAttrs.LOAN_KEY || reject("LOAN_KEY name not found"),
-                                INVOICE: "-------------",
-                                TO: parsedAttrs.TO.toLowerCase(),
-                                FROM: parsedAttrs.FROM.toLowerCase(),
-                                TYPE: parsedAttrs.TYPE,
-                                INVOICE_KEY: parsedAttrs.INVOICE_KEY,
-                                PO_KEY: INVOICE.PO_KEY,
-                                VALUE: parsedAttrs.VALUE,
-                                DATE: parsedAttrs.DATE,
-                                SALT: parsedAttrs.SALT,
-                                NEWSALT: SALT2,
+                    /////////////////////////////////////////////////////////////////////////////////////////
+
+                    //console.log(name.channels[0].channel_id)
+
+
+                    var ChannelEvent = channel.newChannelEventHub("localhost:10051")
+                    var ChainCodeEvent = ChannelEvent.registerChaincodeEvent(chaincodeid, hash,
+                        async (event, block_num, txnid, status) => {
+                            var results = JSON.parse(event.payload.toString('utf8'))
+                            //    console.log(results)
+
+                            //////////////////
+                            const key = new NodeRSA();
+                            const ciphertext = results.VALUE
+                            var keyprivate = await db.DBreadprivate(`${PackageUser}`, "CompanyData", `${PackageUser}`)   //// อันนี้ต้องทำของใครของมัน อันนี้ของโลตัส
+                            key.importKey(keyprivate, 'pkcs1-private-pem');
+                            try {
+                                var decrypted = key.decrypt(ciphertext, 'utf8');
+                                INFORMATION = JSON.parse(decrypted)
+                                if (INFORMATION.TYPE == "Auto Verify") {
+                                    console.log('decrypted: ', INFORMATION);
+                                    console.log(`-------------- End ${INFORMATION.TYPE}------------------`)
+                                    if (INFORMATION.PO == "data not found") {
+
+                                    } else {
+                                        var PO = INFORMATION.PO
+                                        var checkPO = ""
+                                        try {
+                                            checkPO = await db.DBread(INFORMATION.BANK, PO.TYPE, `${PO.TYPE}_BODY|` + PO.PO_KEY)
+                                        } catch (error) {
+                                            // console.log(error)
+                                        }
+                                        // console.log(checkPO)
+                                        if (checkPO == "") {
+                                            db.DBwrite3(INFORMATION.BANK, PO.TYPE, `${PO.TYPE}_BODY|` + PO.PO_KEY, PO, results.KEY) //เก็บข้อมูลใบกู้
+                                            db.DBwrite(INFORMATION.BANK, "PO", `PO_SALT_2|` + PO.PO_KEY, INFORMATION.SALT2)
+                                        }
+                                    }
+                                    if (collections == "INVOICE") {
+                                        resolve({
+                                            message: {
+                                                INFO: INFORMATION
+                                            }
+                                        });
+                                    } else {
+                                        resolve({
+                                            message: {
+                                                INFO: INFORMATION
+                                            }
+                                        });
+                                    }
+                                }
+                            } catch (error) {
+
                             }
-                        });
-                    } else {
-                        resolve({
-                            message: {
-                                LOAN_KEY: unparsedAttrs.LOAN_KEY || reject("LOAN_KEY name not found"),
-                                PO: "-------------",
-                                TO: parsedAttrs.TO.toLowerCase(),
-                                FROM: parsedAttrs.FROM.toLowerCase(),
-                                TYPE: parsedAttrs.TYPE,
-                                PO_KEY: PO.PO_KEY,
-                                VALUE: parsedAttrs.VALUE,
-                                DATE: parsedAttrs.DATE,
-                                SALT: parsedAttrs.SALT,
-                                NEWSALT: SALT2,
-                            }
-                        });
-                    }
+
+
+                        },
+                        (err) => {
+                            ChannelEvent.unregisterChaincodeEvent(ChainCodeEvent);
+                            console.log(util.format('Error %s! ChaincodeEvent listener has been ' +
+                                'deregistered for %s', err, ChannelEvent.getPeerAddr()));
+                        },
+
+                    );
+                    ChannelEvent.connect(true)
+
+
+
+
+                    ////////////////////////////////////////////////////////////////////////////////////////////
+
 
                 }).catch((e) => { /// e เปลี่ยนเป้น err ดีๆ
                     logger.error(`${functionName}  ${e}`);
@@ -1236,7 +1375,7 @@ class toBC {
                     var hash_WORLD_KEY = crypto.createHash('sha256')          //HASH FUCTION
                         .update(WORLD_KEY)
                         .digest('hex');
-                    var PRICE = Invoice.VALUE
+                    var PRICE = Invoice.PRICE
                     if (unparsedAttrs.PRICE_LOAN > PRICE) {
                         permission_reject = "reject"
                         reject("Amount over")
@@ -1247,6 +1386,7 @@ class toBC {
                 }
 
             } else {
+
                 try {
                     var Check_PO = await db.DBread(PackageUser, "LOAN_PO", `LOAN_PO_BODY|${unparsedAttrs.TO.toLowerCase()}|${PackageUser}|` + unparsedAttrs.LOAN_KEY || reject("KEY name not found"))
                     var PO = await db.DBread(PackageUser, "PO", `PO_BODY|` + Check_PO.PO_KEY)
@@ -1254,7 +1394,7 @@ class toBC {
                     var hash_WORLD_KEY = crypto.createHash('sha256')          //HASH FUCTION
                         .update(WORLD_KEY)
                         .digest('hex');
-                    var PRICE = PO.VALUE
+                    var PRICE = PO.PRICE
                     if (unparsedAttrs.PRICE_LOAN > PRICE) {
                         permission_reject = "reject"
                         reject("Amount over")
@@ -1305,8 +1445,17 @@ class toBC {
                 blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, args, INVOKE_ATTRIBUTES).then(async (result) => {
                     let resultParsed = result.result.toString('utf8');
                     var collections = "ENDORSE_LOAN"
-                    db.DBwrite4(PackageUser, collections, `ENDORSE_LOAN_BODY|${unparsedAttrs.TO.toLowerCase()}|${PackageUser}|` + `${unparsedAttrs.DOC_LOAN}_${unparsedAttrs.LOAN_KEY}`, parsedAttrs, hash, "WAIT")
+                    db.DBwrite5(PackageUser, collections, `ENDORSE_LOAN_BODY|${unparsedAttrs.TO.toLowerCase()}|${PackageUser}|` + `${unparsedAttrs.DOC_LOAN}_${unparsedAttrs.LOAN_KEY}`, parsedAttrs, hash, "WAIT", PackageUser)
                     // db.DBwrite3(unparsedAttrs.BANK, collections, `${collections}_BODY|${INFORMATION.BANK}|` +`${unparsedAttrs.DOC_LOAN}_${unparsedAttrs.KEY}`, parsedAttrs,hash)
+                    if (unparsedAttrs.DOC_LOAN.toUpperCase() == "INVOICE") {
+                        var ID = `LOAN_INVOICE_BODY|${unparsedAttrs.TO.toLowerCase()}|${PackageUser}|` + unparsedAttrs.LOAN_KEY || reject("LOAN_KEY name not found")
+                        db.SetStatusComplete(PackageUser, "LOAN_INVOICE", ID)
+                    } else {
+                        if (unparsedAttrs.DOC_LOAN.toUpperCase() == "PO") {
+                            var ID = `LOAN_PO_BODY|${unparsedAttrs.TO.toLowerCase()}|${PackageUser}|` + unparsedAttrs.LOAN_KEY || reject("KEY name not found")
+                            db.SetStatusComplete(PackageUser, "LOAN_PO", ID)
+                        }
+                    }
 
                     resolve({
                         message: {
@@ -1441,6 +1590,8 @@ class toBC {
             if (permission_reject != "reject") {
                 blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, args, INVOKE_ATTRIBUTES).then(async (result) => {
                     let resultParsed = result.result.toString('utf8');
+                    var ID = `ENDORSE_LOAN_BODY|${PackageUser}|${unparsedAttrs.BANK.toLowerCase()}|${unparsedAttrs.DOC_LOAN.toLowerCase()}_${unparsedAttrs.LOAN_KEY}`
+                    db.SetStatusComplete(PackageUser, "ENDORSE_LOAN", ID)
                     resolve({
                         message: {
                             ENDORSE: Endorse_loan,
@@ -1454,6 +1605,91 @@ class toBC {
                 });
             } else {
                 reject("permission denied. You can't use this function ")
+            }
+
+        })
+
+    }
+    Success_Invoice(unparsedAttrs) {
+        let self = this;
+        let functionName = '[toBC.Success_Invoice(unparsedAttrs)]';
+        return new Promise(async (resolve, reject) => {
+            let invokeObject = {};
+            var USER = PackageUser
+            var TYPE = "INVOICE"
+            var KEY = unparsedAttrs.KEY
+            let args = []
+            let SEND_SUCCESS = {} ///กลับมาลองรัน ดูค่าแฮส ว่าเป็นของตัวไหน ค่าใน อกิวเมนมีไรบ้าง
+            var Check = ""
+            invokeObject = {
+                enrollID: self.enrollID,
+                fcnname: Succes_Invoice,
+            };
+            try {
+                var Invoice = await db.DBread(USER, TYPE, `${TYPE}_BODY|${KEY}`)
+            } catch (error) {
+                reject("Invoice information not available")
+            }
+            try {
+                var hash = await db.DBreadHash(USER, TYPE, `${TYPE}_BODY|${KEY}`)
+            } catch (error) {
+                reject("Invoice information not available")
+            }
+
+            var HASH_USER = crypto.createHash('sha256')   //HASH FUCTION
+                .update(USER)
+                .digest('hex');
+
+            SEND_SUCCESS = {
+                TYPE: "succes",
+                FROM: PackageUser,
+                INVOICE_KEY: Invoice.INVOICE_KEY,
+            };
+            var getkey = {
+                enrollID: self.enrollID,
+                fcnname: GetValue,
+
+            };
+            var companydata = [Invoice.TO.toLowerCase(),
+                PackageUser
+            ]
+            // console.log("++-+--+-+-+-+--+-+-+-+-+-+--+-+-+-*******************")
+            try {
+                var Publickey = await Get_Key(getkey, companydata)  //ไป get key from world
+                console.log("KEY+++" + Publickey)
+            } catch (error) {
+                reject("Company not found.")
+                Check = "reject"
+            }
+            // console.log("++-+--+-+-+-+--+-+-+-+-+-+--+-+-+-*******************")
+            const key = new NodeRSA();
+            key.importKey(Publickey.toString(), 'pkcs1-public-pem');
+            const cip_succes = key.encrypt(SEND_SUCCESS, 'base64', 'utf8');
+            console.log('ciphertext: ', cip_succes);
+            args = [hash, TYPE, HASH_USER, cip_succes
+            ];
+            console.log("-----------------")
+            console.log(args)
+            console.log("-----------------")
+            if (Check != "reject") {
+                blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, args, INVOKE_ATTRIBUTES).then(async (result) => {
+                    let resultParsed = result.result.toString('utf8');
+                    var key = "INVOICE_BODY|" + unparsedAttrs.KEY
+                    db.SetStatusComplete(PackageUser, "INVOICE", key)
+                    resolve({
+                        message: {
+                            USER: PackageUser,
+                            TYPE: TYPE,
+                            KEY: unparsedAttrs.KEY,
+                            result: "Accept Success !!"
+                        }
+                    });
+                }).catch((e) => { /// e เปลี่ยนเป้น err ดีๆ
+                    logger.error(`${functionName}  ${e}`);
+                    reject(` ${e}`);
+                });
+            } else {
+                reject("ERROR.")
             }
 
         })
@@ -1478,7 +1714,7 @@ class toBC {
             }
             invokeObject = {
                 enrollID: self.enrollID,
-                fcnname: PushInBlockchain,
+                fcnname: AUTO_PushInBlockchain,
             };
             // ///////////////
             getkey = {
@@ -1502,8 +1738,11 @@ class toBC {
                 .update(unparsedAttrs.FROM)
                 .digest('hex');
             // console.log('HASH Ciphertext Complete!!! : ', hash)
-            let args = [hash, ciphertext, hash_PO
+            // console.log("++++")
+            // console.log(unparsedAttrs.T_ID)
+            let args = [hash, ciphertext, hash_PO, unparsedAttrs.T_ID
             ];
+            // console.log(args)
             blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, args, INVOKE_ATTRIBUTES).then(async (result) => {
                 let resultParsed = result.result.toString('utf8');
                 resolve({
@@ -1622,6 +1861,11 @@ class toBC {
             if (Check != "reject") {
                 blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, args, INVOKE_ATTRIBUTES).then(async (result) => {
                     let resultParsed = result.result.toString('utf8');
+                    var key = "PO_BODY|" + Invoice.PO_KEY
+                    db.SetStatusWait(PackageUser, "PO", key)
+                    //////////////
+                    var key = "INVOICE_BODY|" + unparsedAttrs.KEY
+                    db.SetStatusReject(PackageUser, "INVOICE", key)
                     resolve({
                         message: {
                             USER: PackageUser,
@@ -1681,6 +1925,8 @@ class toBC {
             console.log("-----------------")
             blockchain.invoke(invokeObject.enrollID, invokeObject.fcnname, args, INVOKE_ATTRIBUTES).then(async (result) => {
                 let resultParsed = result.result.toString('utf8');
+                var key = `ENDORSE_LOAN_BODY|${TO}|${PackageUser}|${unparsedAttrs.DOC_LOAN.toLowerCase()}_` + LOAN_KEY
+                db.SetStatusReject(PackageUser, "ENDORSE_LOAN", key)
                 resolve({
                     message: {
                         USER: PackageUser,
@@ -1896,18 +2142,80 @@ class toBC {
         let self = this;
         let functionName = '[toBC.GetValue(unparsedAttrs)]';
         return new Promise(async (resolve, reject) => {
-
+            console.log(unparsedAttrs)
+            console.log("////////////////////")
             console.log(PackageUser)
             console.log(unparsedAttrs.TYPE)
-            console.log(`${unparsedAttrs.TYPE}_BODY` + unparsedAttrs.KEY)
-            var VALUE = await db.DBread(PackageUser, unparsedAttrs.TYPE, `${unparsedAttrs.TYPE}_BODY|` + unparsedAttrs.KEY)
+            console.log(`${unparsedAttrs.TYPE.toUpperCase()}_BODY|` + unparsedAttrs.KEY)
+            var KEY
+            if (unparsedAttrs.TYPE.toUpperCase() == "ENDORSE_LOAN") {
+                var VALUE = await db.DBread(PackageUser, unparsedAttrs.TYPE.toUpperCase(), `${unparsedAttrs.TYPE.toUpperCase()}_BODY|${unparsedAttrs.COMPANY}|${unparsedAttrs.BANK}|${unparsedAttrs.DOC_LOAN}_` + unparsedAttrs.LOAN_KEY)
+                KEY = VALUE.LOAN_KEY
+            } else {
+                if (unparsedAttrs.TYPE.toUpperCase() == "LOAN_PO") {
+                    console.log("/////////////++++++++++++++++++///////")
+                    var VALUE = await db.DBread(PackageUser, unparsedAttrs.TYPE.toUpperCase(), `${unparsedAttrs.TYPE.toUpperCase()}_BODY|${unparsedAttrs.COMPANY}|${unparsedAttrs.BANK}|` + unparsedAttrs.LOAN_KEY)
+                    console.log("/////////////++++++++++++++++++///////")
+                    KEY = VALUE.LOAN_KEY
+                } else {
+                    if (unparsedAttrs.TYPE.toUpperCase() == "LOAN_INVOICE") {
+                        console.log(`${unparsedAttrs.TYPE.toUpperCase()}_BODY|${unparsedAttrs.COMPANY}|${unparsedAttrs.BANK}|` + unparsedAttrs.LOAN_KEY)
+                        var VALUE = await db.DBread(PackageUser, unparsedAttrs.TYPE.toUpperCase(), `${unparsedAttrs.TYPE.toUpperCase()}_BODY|${unparsedAttrs.COMPANY}|${unparsedAttrs.BANK}|` + unparsedAttrs.LOAN_KEY)
+                        KEY = VALUE.LOAN_KEY
+                    } else {
+                        var VALUE = await db.DBread(PackageUser, unparsedAttrs.TYPE.toUpperCase(), `${unparsedAttrs.TYPE.toUpperCase()}_BODY|` + unparsedAttrs.KEY)
+                        if (VALUE.TYPE == "PO") {
+                            KEY = VALUE.PO_KEY
+                        } else {
+                            if (VALUE.TYPE == "INVOICE") {
+                                KEY = VALUE.INVOICE_KEY
+                            }
+                        }
+                    }
+
+                }
+            }
             console.log(VALUE);
             console.log("----------------------------------------");
             resolve({
                 message: {
                     INFO: VALUE,
+                    KEY: KEY
                 }
             });
+        });
+    }
+    Getall(unparsedAttrs) {
+        let self = this;
+        let functionName = '[toBC.GetValue(unparsedAttrs)]';
+        return new Promise(async (resolve, reject) => {
+            var MongoClient = require('mongodb').MongoClient;
+            // var url = "mongodb://localhost:27017/";
+            MongoClient.connect(url, function (err, db) {
+                if (err) throw err;
+                var dbo = db.db(PackageUser);
+                var i
+                var info = {}
+                var data = []
+            console.log(unparsedAttrs)
+            console.log("////////////////////")
+            console.log(PackageUser)
+            console.log(unparsedAttrs.TYPE)
+            console.log(`${unparsedAttrs.TYPE.toUpperCase()}_BODY|` + unparsedAttrs.KEY)
+            var TYPE = unparsedAttrs.TYPE.toUpperCase()
+            var user = unparsedAttrs.user.toLowerCase()
+            dbo.collection(`${TYPE}`).find({ user: `${user}` }).toArray(function (err, VALUE) {
+                console.log(VALUE);
+                console.log("----------------------------------------");
+                resolve({
+                    message: {
+                        DASHBOARD_LIST: VALUE
+                    }
+                });
+                db.close();
+            });
+        });
+           
         });
     }
 
@@ -1922,60 +2230,124 @@ class toBC {
                 var dbo = db.db(PackageUser);
                 var i
                 var info = {}
-                var data_PO = []
-                var data_INVOICE = []
-                var status = {}
+                var data = []
+                // var data_INVOICE = []
+                var DASHBOARD_DATA = {}
                 dbo.collection("PO".toUpperCase()).find({ status: 'WAIT' }).toArray(function (err, P_result_W) {
                     dbo.collection("PO".toUpperCase()).find({ status: 'COMPLETE' }).toArray(function (err, P_result_C) {
                         dbo.collection("INVOICE".toUpperCase()).find({ status: 'WAIT' }).toArray(function (err, I_result_W) {
                             dbo.collection("INVOICE".toUpperCase()).find({ status: 'COMPLETE' }).toArray(function (err, I_result_C) {
-                                if (err) throw err;
-                                status = {
-                                    PO: P_result_W.length + P_result_C.length,
-                                    PO_WAIT: P_result_W.length,
-                                    PO_COMPLETE: P_result_C.length,
-                                    ///////////////////
-                                    INVOCE: I_result_W.length + I_result_C.length,
-                                    INVOICE_WAIT: I_result_W.length,
-                                    INVOICE_COMPLETE: I_result_C.length,
-                                }
-                                console.log(P_result_W.length)
-                                console.log(P_result_C.length)
-                                console.log("ALL PO = " + status.PO)
-                                console.log(I_result_W.length)
-                                console.log(I_result_C.length)
-                                console.log("ALL INVOICE = " + status.INVOICE)
+                                dbo.collection("LOAN_INVOICE".toUpperCase()).find({ status: 'WAIT' }).toArray(function (err, LI_result_W) {
+                                    dbo.collection("LOAN_INVOICE".toUpperCase()).find({ status: 'COMPLETE' }).toArray(function (err, LI_result_C) {
+                                        dbo.collection("LOAN_PO".toUpperCase()).find({ status: 'WAIT' }).toArray(function (err, LP_result_W) {
+                                            dbo.collection("LOAN_PO".toUpperCase()).find({ status: 'COMPLETE' }).toArray(function (err, LP_result_C) {
+                                                dbo.collection("ENDORSE_LOAN".toUpperCase()).find({ status: 'WAIT' }).toArray(function (err, E_result_W) {
+                                                    dbo.collection("ENDORSE_LOAN".toUpperCase()).find({ status: 'COMPLETE' }).toArray(function (err, E_result_C) {
 
-                                for (i = 0; i < P_result_W.length; i++) {
-                                    info = {
-                                        COMPANY: P_result_W[i].value.FROM,
-                                        DATE: P_result_W[i].value.DATE,
-                                        TYPE: P_result_W[i].value.TYPE,
-                                        STATUS: P_result_W[i].status
-                                    }
-                                    data_PO[i] = info
-                                }
-                                for (i = 0; i < I_result_W.length; i++) {
-                                    info = {
-                                        COMPANY: I_result_W[i].value.FROM,
-                                        DATE: I_result_W[i].value.DATE,
-                                        TYPE: I_result_W[i].value.TYPE,
-                                        STATUS: I_result_W[i].status
-                                    }
-                                    data_INVOICE[i] = info
-                                }
-                                console.log(status)
-                                console.log(data_PO)
-                                console.log(data_INVOICE)
+                                                        if (err) throw err;
+                                                        DASHBOARD_DATA = {
+                                                            PO: P_result_W.length + P_result_C.length,
+                                                            PO_WAIT: P_result_W.length,
+                                                            PO_COMPLETE: P_result_C.length,
+                                                            ///////////////////
+                                                            INVOICE: I_result_W.length + I_result_C.length,
+                                                            INVOICE_WAIT: I_result_W.length,
+                                                            INVOICE_COMPLETE: I_result_C.length,
+                                                            ////////////////////////////
+                                                            LOAN_INFO: LP_result_W.length + LP_result_C.length + LI_result_W.length + LI_result_C.length,
+                                                            LOAN_INFO_WAIT: LP_result_W.length + LI_result_W.length,
+                                                            LOAN_INFO_COMPLETE: LP_result_C.length + LI_result_C.length,
+                                                            //////////////////
+                                                            ENDORSE_LOAN: E_result_W.length + E_result_C.length,
+                                                            ENDORSE_LOAN_WAIT: E_result_W.length,
+                                                            ENDORSE_LOAN_COMPLETE: E_result_C.length,
+                                                        }
+                                                        console.log(P_result_W.length)
+                                                        console.log(P_result_C.length)
+                                                        console.log("ALL PO = " + DASHBOARD_DATA.PO)
+                                                        console.log(I_result_W.length)
+                                                        console.log(I_result_C.length)
+                                                        console.log("ALL INVOICE = " + DASHBOARD_DATA.INVOICE)
 
-                                resolve({
-                                    message: {
-                                        STATUS: status,
-                                        INFO_PO: data_PO,
-                                        INFO_INVOICE: data_INVOICE,
-                                    }
+                                                        for (i = 0; i < P_result_W.length + I_result_W.length + LI_result_W.length + LP_result_W.length + E_result_W.length; i++) {
+                                                            if (i >= P_result_W.length + LI_result_W.length + LP_result_W.length + E_result_W.length) {
+                                                                var a = i - (P_result_W.length + LI_result_W.length + LP_result_W.length + E_result_W.length)
+                                                                info = {
+                                                                    COMPANY: I_result_W[a].value.FROM,
+                                                                    DATE: I_result_W[a].value.DATE,
+                                                                    TYPE: I_result_W[a].value.TYPE,
+                                                                    KEY: I_result_W[a].value.INVOICE_KEY,
+                                                                    STATUS: I_result_W[a].status
+                                                                }
+                                                            } else {
+                                                                if (i >= LI_result_W.length + LP_result_W.length + E_result_W.length) {
+                                                                    var b = i - (LI_result_W.length + LP_result_W.length + E_result_W.length)
+                                                                    info = {
+                                                                        COMPANY: P_result_W[b].value.FROM,
+                                                                        DATE: P_result_W[b].value.DATE,
+                                                                        TYPE: P_result_W[b].value.TYPE,
+                                                                        KEY: P_result_W[b].value.PO_KEY,
+                                                                        STATUS: P_result_W[b].status
+                                                                    }
+                                                                } else {
+                                                                    if (i >= LI_result_W.length + LP_result_W.length) {
+                                                                        var c = i - (LI_result_W.length + LP_result_W.length)
+                                                                        info = {
+                                                                            COMPANY: E_result_W[c].value.TO,
+                                                                            DATE: E_result_W[c].value.DATE,
+                                                                            TYPE: E_result_W[c].value.TYPE,
+                                                                            LOAN_KEY: E_result_W[c].value.LOAN_KEY,
+                                                                            STATUS: E_result_W[c].status,
+                                                                            BANK: E_result_W[c].value.BANK,
+                                                                            DOC_LOAN: E_result_W[c].value.DOC_LOAN
+                                                                        }
+                                                                    } else {
+                                                                        if (i >= LI_result_W.length) {
+                                                                            var d = i - LI_result_W.length
+                                                                            info = {
+                                                                                COMPANY: LP_result_W[d].value.FROM,
+                                                                                DATE: LP_result_W[d].value.DATE,
+                                                                                TYPE: LP_result_W[d].value.TYPE,
+                                                                                KEY: LP_result_W[d].value.PO_KEY,
+                                                                                LOAN_KEY: LP_result_W[d].value.LOAN_KEY,
+                                                                                STATUS: LP_result_W[d].status,
+                                                                                BANK: LP_result_W[d].value.BANK,
+                                                                            }
+                                                                        } else {
+                                                                            info = {
+                                                                                COMPANY: LI_result_W[i].value.FROM,
+                                                                                DATE: LI_result_W[i].value.DATE,
+                                                                                TYPE: LI_result_W[i].value.TYPE,
+                                                                                KEY: LI_result_W[i].value.INVOICE_KEY,
+                                                                                LOAN_KEY: LI_result_W[i].value.LOAN_KEY,
+                                                                                STATUS: LI_result_W[i].status,
+                                                                                BANK:LI_result_W[i].value.BANK
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+
+                                                            }
+
+
+
+                                                            data[i] = info
+                                                        }
+                                                        console.log(DASHBOARD_DATA)
+                                                        console.log(data)
+                                                        resolve({
+                                                            message: {
+                                                                DASHBOARD_DATA: DASHBOARD_DATA,
+                                                                DASHBOARD_LIST: data,
+                                                            }
+                                                        });
+                                                        db.close();
+                                                    });
+                                                });
+                                            });
+                                        });
+                                    });
                                 });
-                                db.close();
                             });
                         });
                     });
@@ -1983,7 +2355,109 @@ class toBC {
             });
         });
     }
-
+    
+    GetList_Loan() {
+        let self = this;
+        let functionName = '[toBC.GetList_Loan(unparsedAttrs)]';
+        return new Promise(async (resolve, reject) => {
+            var MongoClient = require('mongodb').MongoClient;
+            // var url = "mongodb://localhost:27017/";
+            MongoClient.connect(url, function (err, db) {
+                if (err) throw err;
+                var dbo = db.db(PackageUser);
+                var i
+                var j
+                var k
+                var info = {}
+                var data = []
+                // var data_INVOICE = []
+                var DASHBOARD_DATA = {}
+                dbo.collection("LOAN_INVOICE".toUpperCase()).find({ status: 'WAIT' }).toArray(function (err, LI_result_W) {
+                    dbo.collection("LOAN_INVOICE".toUpperCase()).find({ status: 'COMPLETE' }).toArray(function (err, LI_result_C) {
+                        dbo.collection("LOAN_PO".toUpperCase()).find({ status: 'WAIT' }).toArray(function (err, LP_result_W) {
+                            dbo.collection("LOAN_PO".toUpperCase()).find({ status: 'COMPLETE' }).toArray(function (err, LP_result_C) {
+                                dbo.collection("ENDORSE_LOAN".toUpperCase()).find({ status: 'WAIT' }).toArray(function (err, E_result_W) {
+                                    dbo.collection("ENDORSE_LOAN".toUpperCase()).find({ status: 'COMPLETE' }).toArray(function (err, E_result_C) {
+                                        if (err) throw err;
+                                        DASHBOARD_DATA = {
+                                            // LOAN_INVOICE: LI_result_W.length + LI_result_C.length,
+                                            // LOAN_INVOICE_WAIT: LI_result_W.length,
+                                            // LOAN_INVOICE_COMPLETE: LI_result_C.length,
+                                            ///////////////////
+                                            LOAN_INFO: LP_result_W.length + LP_result_C.length + LI_result_W.length + LI_result_C.length,
+                                            LOAN_INFO_WAIT: LP_result_W.length + LI_result_W.length,
+                                            LOAN_INFO_COMPLETE: LP_result_C.length + LI_result_C.length,
+                                            //////////////////
+                                            ENDORSE_LOAN: E_result_W.length + E_result_C.length,
+                                            ENDORSE_LOAN_WAIT: E_result_W.length,
+                                            ENDORSE_LOAN_COMPLETE: E_result_C.length,
+                                        }
+                                        console.log(LP_result_W.length)
+                                        console.log(LP_result_C.length)
+                                        console.log("ALL LOAN PO = " + DASHBOARD_DATA.LOAN_PO)
+                                        console.log(LI_result_W.length)
+                                        console.log(LI_result_C.length)
+                                        console.log("ALL LOAN INVOICE = " + DASHBOARD_DATA.LOAN_INVOICE)
+                                        console.log(E_result_W.length)
+                                        console.log(E_result_C.length)
+                                        console.log("ALL ENDORSE_LOAN = " + DASHBOARD_DATA.ENDORSE_LOAN)
+                                        for (i = 0; i < LI_result_W.length + LP_result_W.length + E_result_W.length; i++) {
+                                            if (i >= LI_result_W.length + LP_result_W.length) {
+                                                k = i - (LI_result_W.length + LP_result_W.length)
+                                                info = {
+                                                    COMPANY: E_result_W[k].value.TO,
+                                                    DATE: E_result_W[k].value.DATE,
+                                                    TYPE: E_result_W[k].value.TYPE,
+                                                    LOAN_KEY: E_result_W[k].value.LOAN_KEY,
+                                                    STATUS: E_result_W[k].status,
+                                                    BANK: E_result_W[k].value.BANK,
+                                                    DOC_LOAN: E_result_W[k].value.DOC_LOAN
+                                                }
+                                            } else {
+                                                if (i >= LI_result_W.length) {
+                                                    j = i - LI_result_W.length
+                                                    info = {
+                                                        COMPANY: LP_result_W[j].value.FROM,
+                                                        DATE: LP_result_W[j].value.DATE,
+                                                        TYPE: LP_result_W[j].value.TYPE,
+                                                        KEY: LP_result_W[j].value.PO_KEY,
+                                                        LOAN_KEY: LP_result_W[j].value.LOAN_KEY,
+                                                        STATUS: LP_result_W[j].status,
+                                                        BANK: LP_result_W[j].value.BANK,
+                                                    }
+                                                } else {
+                                                    info = {
+                                                        COMPANY: LI_result_W[i].value.FROM,
+                                                        DATE: LI_result_W[i].value.DATE,
+                                                        TYPE: LI_result_W[i].value.TYPE,
+                                                        KEY: LI_result_W[i].value.INVOICE_KEY,
+                                                        LOAN_KEY: LI_result_W[i].value.LOAN_KEY,
+                                                        STATUS: LI_result_W[i].status,
+                                                        BANK: LI_result_W[i].value.BANK,
+                                                    }
+                                                }
+                                            }
+                                            data[i] = info
+                                        }
+                                        console.log(DASHBOARD_DATA)
+                                        console.log(data)
+                                        resolve({
+                                            message: {
+                                                DASHBOARD_DATA: DASHBOARD_DATA,
+                                                DASHBOARD_LIST: data,
+                                            }
+                                        });
+                                        db.close();
+                                    });
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+        });
+    }
+    ///// เพิ่มฟังก์ชัน ยืนยันอินวอย ให้คอมพีท
 
     Get_Blockchain(unparsedAttrs) {
         let self = this;

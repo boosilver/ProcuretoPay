@@ -58,7 +58,24 @@ function DBwrite4(company, collections, key, value1, value2, value3) {
   })
   return;
 }
+function DBwrite5(company, collections, key, value1, value2, value3, value4) {
+  MongoClient.connect(url, function (err, db) { //connect DB url
+    if (err) throw err;
+    var dbo = db.db(company);
+    dbo.createCollection(collections, function (err, res) { //create collection 
+      if (err) throw err;
+      var myobj = [
+        { _id: key, value: value1, hash: value2, status: value3, user: value4 }
+      ];
+      dbo.collection(collections).insertMany(myobj, function (err, res) { //insertMany
+        if (err) throw err;
 
+        db.close();
+      });
+    });
+  })
+  return;
+}
 async function DBreadprivate(company, collections, key) {
   var data;
   db = await MongoClient.connect(url)
@@ -92,7 +109,8 @@ async function DBread(company, collections, key) {
   if (!db) console.log('error to connect database server ')
   var dbo = db.db(company);
   result = await dbo.collection(collections).findOne({ _id: key })
-  if (!result) console.log('data not found ')
+  if (!result) console.log(' ')
+  //console.log('data not found ')
   //console.log(result.name);
   data = result.value
   db.close();
@@ -123,6 +141,19 @@ async function DBreadPublic(company, collections, key) {
   if (!result) console.log('data not found ')
   //console.log(result.name);
   data = result.publickey
+  db.close();
+
+  return data;
+}
+async function DBreadStatus(company, collections, key) {
+  var data;
+  db = await MongoClient.connect(url)
+  if (!db) console.log('error to connect database server ')
+  var dbo = db.db(company);
+  result = await dbo.collection(collections).findOne({ _id: key })
+  if (!result) console.log('data not found ')
+  //console.log(result.name);
+  data = result.status
   db.close();
 
   return data;
@@ -177,7 +208,11 @@ function AdminForCom(DB, publickey, privatekey) {
         db.close();
       });
     });
-    dbo.createCollection("BORROW_INVOICE", function (err, res) {
+    dbo.createCollection("LOAN_INVOICE", function (err, res) {
+      if (err) throw err;
+      db.close();
+    });
+    dbo.createCollection("LOAN_PO", function (err, res) {
       if (err) throw err;
       db.close();
     });
@@ -205,9 +240,9 @@ function readarray(DB, table) {
     var dbo = db.db(DB);
     dbo.collection(table).find({ value: 'go' }).toArray(function (err, result) {
       if (err) throw err;
-      console.log(result.length);
+      // console.log(result.length);
       for (i = 0; i < result.length; i++) {
-        console.log(result[i].hash.hash2)
+        // console.log(result[i].hash.hash2)
         data[i] = result[i].hash.hash2
       }
       console.log(data)
@@ -223,9 +258,9 @@ function SetStatusComplete(DB, collections, key) {
     if (err) throw err;
     var dbo = db.db(DB);
     var myquery = { _id: key ,status: "WAIT" };
-    console.log(DB,collections,key);
+    // console.log(DB,collections,key);
     var newvalues = { $set: {  status: "COMPLETE" } };
-    console.log(DB,collections,key);
+    // console.log(DB,collections,key);
     dbo.collection(collections).updateOne(myquery, newvalues, function (err, res) {
       if (err) throw err;
       console.log("1 document updated");
@@ -250,7 +285,20 @@ function SetStatusWait(DB, collections, key) {
   return;
 }
 
-
+function SetStatusReject(DB, collections, key) {
+  MongoClient.connect(url, function (err, db) {
+    if (err) throw err;
+    var dbo = db.db(DB);
+    var myquery = { _id: key ,status: "WAIT" };
+    var newvalues = { $set: { status: "REJECT" } };
+    dbo.collection(collections).updateOne(myquery, newvalues, function (err, res) {
+      if (err) throw err;
+      console.log("1 document updated");
+      db.close();
+    });
+  });
+  return;
+}
 //result = await dbo.collection(collections).findOne({ _id: key })
 
 module.exports = {
@@ -260,6 +308,7 @@ module.exports = {
   AdminForCom: AdminForCom,
   DBwrite3: DBwrite3,
   DBwrite4: DBwrite4,
+  DBwrite5: DBwrite5,
   DBreadHash: DBreadHash,
   DBreadvalue: DBreadvalue,
   DBread: DBread,
@@ -267,7 +316,9 @@ module.exports = {
   DBdelete: DBdelete,
   readarray: readarray,
   SetStatusComplete: SetStatusComplete,
-  SetStatusWait:SetStatusWait
+  SetStatusWait:SetStatusWait,
+  SetStatusReject :SetStatusReject,
+  DBreadStatus : DBreadStatus
 
 }
 

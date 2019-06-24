@@ -34,14 +34,17 @@ var member_user = null;
 var store_path = path.join(__dirname, 'hfc-key-store');
 console.log('Store path:' + store_path);
 var tx_id = null;
+const PackageUser = process.env.USER;
 
 
 
-function DATA_NOT_FOUND(INFORMATION) {
+function DATA_NOT_FOUND(INFORMATION,T_ID) {
     var getkey = {
         FROM: "themall",
         BANK: INFORMATION.BANK,
         PO: "data not found",
+        SALT2: INFORMATION.SALT2,
+        T_ID: T_ID
     };
     new toBC("themall").AutoPushInBlockchain(getkey).then((result) => {
     })
@@ -117,180 +120,206 @@ Fabric_Client.newDefaultKeyValueStore({
                         var INFORMATION = JSON.parse(decrypted)
                         console.log('decrypted: ', JSON.parse(decrypted));
                         var DATABASE = {}
-                        if (INFORMATION.TYPE == "PO") {
-                            DATABASE = {
-                                TO: INFORMATION.TO.toLowerCase(),
-                                FROM: INFORMATION.FROM.toLowerCase(),
-                                TYPE: INFORMATION.TYPE,
-                                PO_KEY: INFORMATION.PO_KEY,
-                                ADDRESS: INFORMATION.ADDRESS,
-                                EMAIL: INFORMATION.EMAIL,
-                                TEL_NUMBER: INFORMATION.TEL_NUMBER,
-                                TAX_ID: INFORMATION.TAX_ID,
-                                DELIVERY_ADDRESS: INFORMATION.DELIVERY_ADDRESS,
-                                PRODUCT: INFORMATION.PRODUCT.toLowerCase(),
-                                NUM_PRODUCT: INFORMATION.NUM_PRODUCT,
-                                VALUE: INFORMATION.VALUE,
-                                PRICE: INFORMATION.PRICE,
-                                VAT: INFORMATION.VAT,
-                                TOTAL_PRICE: INFORMATION.TOTAL_PRICE,
-                                DATE: INFORMATION.DATE,
-                                DELIVERY_DATE: INFORMATION.DELIVERY_DATE,
-                                PAYMENT: INFORMATION.PAYMENT,
-                                DETAIL: INFORMATION.DETAIL,
-                            }
-                        } else if (INFORMATION.TYPE == "INVOICE") {
-                            DATABASE = {
-                                TO: INFORMATION.TO.toLowerCase(),
-                                FROM: INFORMATION.FROM.toLowerCase(),
-                                TYPE: INFORMATION.TYPE,
-                                INVOICE_KEY: INFORMATION.INVOICE_KEY,
-                                PO_KEY: INFORMATION.PO_KEY,
-                                ADDRESS: INFORMATION.ADDRESS,
-                                EMAIL: INFORMATION.EMAIL,
-                                TEL_NUMBER: INFORMATION.TEL_NUMBER,
-                                TAX_ID: INFORMATION.TAX_ID,
-                                DELIVERY_ADDRESS: INFORMATION.DELIVERY_ADDRESS,
-                                PRODUCT: INFORMATION.PRODUCT.toLowerCase(),
-                                NUM_PRODUCT: INFORMATION.NUM_PRODUCT,
-                                VALUE: INFORMATION.VALUE,
-                                PRICE: INFORMATION.PRICE,
-                                VAT: INFORMATION.VAT,
-                                TOTAL_PRICE: INFORMATION.TOTAL_PRICE,
-                                DATE: INFORMATION.DATE,
-                                DELIVERY_DATE: INFORMATION.DELIVERY_DATE,
-                                PAYMENT: INFORMATION.PAYMENT,
-                                DETAIL: INFORMATION.DETAIL,
-                            }
-                        } else if (INFORMATION.TYPE == "ENDORSE_LOAN") {
-                            DATABASE = {
-                                TO: INFORMATION.TO.toLowerCase(),
-                                BANK: INFORMATION.BANK.toLowerCase(),
-                                TYPE: INFORMATION.TYPE,
-                                DOC_LOAN: INFORMATION.DOC_LOAN.toLowerCase(),
-                                LOAN_KEY: INFORMATION.LOAN_KEY,
-                                PRICE_LOAN: INFORMATION.PRICE_LOAN,
-                                DATE: INFORMATION.DATE,
-                            }
-                        }
-                        if (INFORMATION.VERIFY == "Verify") {
-                            console.log(`-------------- End ${INFORMATION.VERIFY}------------------`)
-                        } else console.log(`-------------- End ${INFORMATION.TYPE}------------------`)
-                        var checkID = ""
-                        if (!INFORMATION.INVOICE_KEY) {
-                            try {
-                                checkID = await db.DBread(INFORMATION.TO, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.PO_KEY)
-                            } catch (error) {
-                                // console.log(error)
-                            }
+                        if (INFORMATION.TYPE == "reject") {
+                            var ID = "PO_BODY|" + INFORMATION.PO_KEY
+                            db.SetStatusWait(PackageUser, "PO", ID)
+                            ///////////////////
+                            var ID = "INVOICE_BODY|" + INFORMATION.INVOICE_KEY
+                            db.SetStatusReject(PackageUser, "INVOICE", ID)
+                            console.log(`-------------- End ${INFORMATION.TYPE}------------------`)
                         } else {
-                            try {
-                                checkID = await db.DBread(INFORMATION.TO, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.INVOICE_KEY)
-                            } catch (error) {
-                                // console.log(error)
-                            }
-                        }
-                        if (INFORMATION.VERIFY == "Verify") {
-                            if (INFORMATION.TYPE == "INVOICE") {
-                                ///////////INVOICE
-                                try {
-                                    var Verify = await db.DBread("themall", INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.INVOICE_KEY)
-                                    var SALT = await db.DBread("themall", "PO", `PO_SALT|` + Verify.PO_KEY)
-                                } catch (error) {
-                                    // DATA_NOT_FOUND(INFORMATION)
-                                }
-                                try {
-                                    if (INFORMATION.TO == Verify.TO && INFORMATION.FROM == Verify.FROM && INFORMATION.TYPE == Verify.TYPE
-                                        && INFORMATION.INVOICE_KEY == Verify.INVOICE_KEY && INFORMATION.PO_KEY == Verify.PO_KEY && INFORMATION.VALUE == Verify.VALUE && INFORMATION.DATE == Verify.DATE
-                                        && INFORMATION.SALT == SALT) { //// เช็คว่าที่ส่งมาตรงกับในดาต้าเบสไหม 
-                                        var INFO = "PO"
-                                        var PO = await db.DBread("themall", INFO, `${INFO}_BODY|` + INFORMATION.PO_KEY)
-                                        var SALT = await db.DBread("themall", INFO, `${INFO}_SALT|` + INFORMATION.PO_KEY)
-                                        var getkey = {
-                                            FROM: "themall",
-                                            BANK: INFORMATION.BANK,
-                                            PO: PO,
-                                            SALT: SALT,
-                                            SALT2: INFORMATION.SALT2,
-                                        };
-                                        var functionName = "eventthemall"
-                                        // console.log("+++ : "+companydata)
-                                        // console.log("+++"+getkey)
-                                        new toBC("themall").AutoPushInBlockchain(getkey).then((result) => {
-                                        })
-                                            .catch((error) => {
-                                                logger.error(`${functionName} Failed to transfer new Service Request: ${error}`);
-
-                                            });
-                                    } else {
-                                        DATA_NOT_FOUND(INFORMATION)
+                            if(INFORMATION.TYPE == "succes"){
+                                var ID = "INVOICE_BODY|" + INFORMATION.INVOICE_KEY
+                                db.SetStatusComplete(PackageUser, "INVOICE", ID)
+                            }else {
+                                if (INFORMATION.TYPE == "PO") {
+                                    DATABASE = {
+                                        TO: INFORMATION.TO.toLowerCase(),
+                                        FROM: INFORMATION.FROM.toLowerCase(),
+                                        TYPE: INFORMATION.TYPE,
+                                        PO_KEY: INFORMATION.PO_KEY,
+                                        ADDRESS: INFORMATION.ADDRESS,
+                                        EMAIL: INFORMATION.EMAIL,
+                                        TEL_NUMBER: INFORMATION.TEL_NUMBER,
+                                        TAX_ID: INFORMATION.TAX_ID,
+                                        DELIVERY_ADDRESS: INFORMATION.DELIVERY_ADDRESS,
+                                        PRODUCT: INFORMATION.PRODUCT.toLowerCase(),
+                                        NUM_PRODUCT: INFORMATION.NUM_PRODUCT,
+                                        VALUE: INFORMATION.VALUE,
+                                        PRICE: INFORMATION.PRICE,
+                                        VAT: INFORMATION.VAT,
+                                        TOTAL_PRICE: INFORMATION.TOTAL_PRICE,
+                                        DATE: INFORMATION.DATE,
+                                        DELIVERY_DATE: INFORMATION.DELIVERY_DATE,
+                                        PAYMENT: INFORMATION.PAYMENT,
+                                        DETAIL: INFORMATION.DETAIL,
                                     }
-                                } catch (error) {
-                                    DATA_NOT_FOUND(INFORMATION)
-                                }
-                            } else {
-                                // console.log("---------PO---------------1")
-                                /////////////PO
-                                try {
-                                    var Verify = await db.DBread("themall", INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.PO_KEY)
-                                    var SALT = await db.DBread("themall", "PO", `PO_SALT|` + Verify.PO_KEY)
-                                } catch (error) {
-                                    // DATA_NOT_FOUND(INFORMATION)
-                                }
-                                try {
-                                    if (INFORMATION.TO == Verify.TO && INFORMATION.FROM == Verify.FROM && INFORMATION.TYPE == Verify.TYPE
-                                        && INFORMATION.INVOICE_KEY == Verify.INVOICE_KEY && INFORMATION.PO_KEY == Verify.PO_KEY && INFORMATION.VALUE == Verify.VALUE && INFORMATION.DATE == Verify.DATE
-                                        && INFORMATION.SALT == SALT) { //// เช็คว่าที่ส่งมาตรงกับในดาต้าเบสไหม 
-                                        var INFO = "INVOICE"
-                                        // console.log(Verify)
-                                        // console.log("---------********---------------3")
-                                        var getkey = {
-                                            FROM: "themall",
-                                            BANK: INFORMATION.BANK,
-                                            PO: Verify,
-                                            SALT: SALT,
-                                            SALT2: INFORMATION.SALT2,
-                                        };
-                                        var functionName = "eventthemall"
-                                        // console.log("+++ : "+companydata)
-                                        // console.log("+++"+getkey)
-                                        new toBC("themall").AutoPushInBlockchain(getkey).then((result) => {
-                                        })
-                                            .catch((error) => {
-                                                logger.error(`${functionName} Failed to transfer new Service Request: ${error}`);
-
-                                            });
-                                    } else {
-                                        DATA_NOT_FOUND(INFORMATION)
+                                } else if (INFORMATION.TYPE == "INVOICE") {
+                                    DATABASE = {
+                                        TO: INFORMATION.TO.toLowerCase(),
+                                        FROM: INFORMATION.FROM.toLowerCase(),
+                                        TYPE: INFORMATION.TYPE,
+                                        INVOICE_KEY: INFORMATION.INVOICE_KEY,
+                                        PO_KEY: INFORMATION.PO_KEY,
+                                        ADDRESS: INFORMATION.ADDRESS,
+                                        EMAIL: INFORMATION.EMAIL,
+                                        TEL_NUMBER: INFORMATION.TEL_NUMBER,
+                                        TAX_ID: INFORMATION.TAX_ID,
+                                        DELIVERY_ADDRESS: INFORMATION.DELIVERY_ADDRESS,
+                                        PRODUCT: INFORMATION.PRODUCT.toLowerCase(),
+                                        NUM_PRODUCT: INFORMATION.NUM_PRODUCT,
+                                        VALUE: INFORMATION.VALUE,
+                                        PRICE: INFORMATION.PRICE,
+                                        VAT: INFORMATION.VAT,
+                                        TOTAL_PRICE: INFORMATION.TOTAL_PRICE,
+                                        DATE: INFORMATION.DATE,
+                                        DELIVERY_DATE: INFORMATION.DELIVERY_DATE,
+                                        PAYMENT: INFORMATION.PAYMENT,
+                                        DETAIL: INFORMATION.DETAIL,
                                     }
-                                } catch (error) {
-                                    DATA_NOT_FOUND(INFORMATION)
+                                } else if (INFORMATION.TYPE == "ENDORSE_LOAN") {
+                                    DATABASE = {
+                                        TO: INFORMATION.TO.toLowerCase(),
+                                        BANK: INFORMATION.BANK.toLowerCase(),
+                                        TYPE: INFORMATION.TYPE,
+                                        DOC_LOAN: INFORMATION.DOC_LOAN.toLowerCase(),
+                                        LOAN_KEY: INFORMATION.LOAN_KEY,
+                                        PRICE_LOAN: INFORMATION.PRICE_LOAN,
+                                        DATE: INFORMATION.DATE,
+                                    }
                                 }
-                            }
-                        } else if (!checkID) {
-                            if (INFORMATION.TYPE == "PO") {
-                                await db.DBwrite4(INFORMATION.TO.toLowerCase(), INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.PO_KEY, DATABASE, results.KEY, "WAIT")
-                                await db.DBwrite(INFORMATION.TO.toLowerCase(), INFORMATION.TYPE, `${INFORMATION.TYPE}_SALT|` + INFORMATION.PO_KEY, INFORMATION.SALT)
-                            } else if (INFORMATION.TYPE == "INVOICE") {
-                                await db.DBwrite4(INFORMATION.TO.toLowerCase(), INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.INVOICE_KEY, DATABASE, results.KEY, "WAIT")
-                                var ID = "PO_BODY|" + INFORMATION.PO_KEY
-                                db.SetStatusComplete(INFORMATION.TO.toLowerCase(),"PO",ID)
-                            } else if (INFORMATION.TYPE == "ENDORSE_LOAN") {
-                                var Check_Endorse = ""
-                                try {
-                                    Check_Endorse = await db.DBread(INFORMATION.TO.toLowerCase(), INFORMATION.TYPE, `ENDORSE_LOAN_BODY|${INFORMATION.TO.toLowerCase()}|${INFORMATION.BANK.toLowerCase()}|` + `${INFORMATION.DOC_LOAN.toLowerCase()}_${INFORMATION.LOAN_KEY}`)
-                                } catch (error) {
-                                    // console.log(error)
+                                if (INFORMATION.VERIFY == "Verify") {
+                                    console.log(`-------------- End ${INFORMATION.VERIFY}------------------`)
+                                } else console.log(`-------------- End ${INFORMATION.TYPE}------------------`)
+                                var checkID = ""
+                                if (!INFORMATION.INVOICE_KEY) {
+                                    try {
+                                        checkID = await db.DBread(INFORMATION.TO, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.PO_KEY)
+                                    } catch (error) {
+                                        // console.log(error)
+                                    }
+                                } else {
+                                    try {
+                                        checkID = await db.DBread(INFORMATION.TO, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.INVOICE_KEY)
+                                    } catch (error) {
+                                        // console.log(error)
+                                    }
                                 }
-                                if (!Check_Endorse) {
-                                    await db.DBwrite4(INFORMATION.TO.toLowerCase(), INFORMATION.TYPE, `ENDORSE_LOAN_BODY|${INFORMATION.TO.toLowerCase()}|${INFORMATION.BANK.toLowerCase()}|` + `${INFORMATION.DOC_LOAN.toLowerCase()}_${INFORMATION.LOAN_KEY}`, DATABASE, results.KEY, "WAIT")
-                                }
-                            }
-                        }
-                        if (decrypted == all) {
-                            console.log('--------- correct salt -----------')
-                        }
+                                if (INFORMATION.VERIFY == "Verify") {
+                                    if (INFORMATION.TYPE == "INVOICE") {
+                                        ///////////INVOICE
+                                        try {
+                                            var Verify = await db.DBread("themall", INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.INVOICE_KEY)
+                                            var SALT = await db.DBread("themall", "PO", `PO_SALT|` + Verify.PO_KEY)
+                                        } catch (error) {
+                                            // DATA_NOT_FOUND(INFORMATION)
+                                        }
+                                        try {
+                                            if (INFORMATION.TO == Verify.TO && INFORMATION.FROM == Verify.FROM && INFORMATION.TYPE == Verify.TYPE
+                                                && INFORMATION.INVOICE_KEY == Verify.INVOICE_KEY && INFORMATION.PO_KEY == Verify.PO_KEY && INFORMATION.VALUE == Verify.VALUE && INFORMATION.DATE == Verify.DATE
+                                                && INFORMATION.SALT == SALT) { //// เช็คว่าที่ส่งมาตรงกับในดาต้าเบสไหม 
+                                                var INFO = "PO"
+                                                var PO = await db.DBread("themall", INFO, `${INFO}_BODY|` + INFORMATION.PO_KEY)
+                                                var SALT = await db.DBread("themall", INFO, `${INFO}_SALT|` + INFORMATION.PO_KEY)
+                                                var getkey = {
+                                                    FROM: "themall",
+                                                    BANK: INFORMATION.BANK,
+                                                    PO: PO,
+                                                    SALT: SALT,
+                                                    SALT2: INFORMATION.SALT2,
+                                                    T_ID: results.KEY
 
+                                                };
+                                                var functionName = "eventthemall"
+                                                // console.log("+++ : "+companydata)
+                                                // console.log("+++"+getkey)
+                                                new toBC("themall").AutoPushInBlockchain(getkey).then((result) => {
+                                                })
+                                                    .catch((error) => {
+                                                        logger.error(`${functionName} Failed to transfer new Service Request: ${error}`);
+    
+                                                    });
+                                            } else {
+                                                DATA_NOT_FOUND(INFORMATION,results.KEY)
+                                            }
+                                        } catch (error) {
+                                            DATA_NOT_FOUND(INFORMATION,results.KEY)
+                                        }
+                                    } else {
+                                        // console.log("---------PO---------------1")
+                                        /////////////PO
+                                        try {
+                                            var Verify = await db.DBread("themall", INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.PO_KEY)
+                                            var SALT = await db.DBread("themall", "PO", `PO_SALT|` + Verify.PO_KEY)
+                                        } catch (error) {
+                                            // DATA_NOT_FOUND(INFORMATION)
+                                        }
+                                        try {
+                                            if (INFORMATION.TO == Verify.TO && INFORMATION.FROM == Verify.FROM && INFORMATION.TYPE == Verify.TYPE
+                                                && INFORMATION.INVOICE_KEY == Verify.INVOICE_KEY && INFORMATION.PO_KEY == Verify.PO_KEY && INFORMATION.VALUE == Verify.VALUE && INFORMATION.DATE == Verify.DATE
+                                                && INFORMATION.SALT == SALT) { //// เช็คว่าที่ส่งมาตรงกับในดาต้าเบสไหม 
+                                                var INFO = "INVOICE"
+                                                // console.log(Verify)
+                                                // console.log("---------********---------------3")
+                                                var getkey = {
+                                                    FROM: "themall",
+                                                    BANK: INFORMATION.BANK,
+                                                    PO: Verify,
+                                                    SALT: SALT,
+                                                    SALT2: INFORMATION.SALT2,
+                                                    T_ID: results.KEY
+
+                                                };
+                                                var functionName = "eventthemall"
+                                                // console.log("+++ : "+companydata)
+                                                // console.log("+++"+getkey)
+                                                new toBC("themall").AutoPushInBlockchain(getkey).then((result) => {
+                                                })
+                                                    .catch((error) => {
+                                                        logger.error(`${functionName} Failed to transfer new Service Request: ${error}`);
+    
+                                                    });
+                                            } else {
+                                                DATA_NOT_FOUND(INFORMATION,results.KEY)
+                                            }
+                                        } catch (error) {
+                                            DATA_NOT_FOUND(INFORMATION,results.KEY)
+                                        }
+                                    }
+                                } else if (!checkID) {
+                                    if (INFORMATION.TYPE == "PO") {
+                                        await db.DBwrite5(INFORMATION.TO.toLowerCase(), INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.PO_KEY, DATABASE, results.KEY, "WAIT",INFORMATION.FROM.toLowerCase())
+                                        await db.DBwrite(INFORMATION.TO.toLowerCase(), INFORMATION.TYPE, `${INFORMATION.TYPE}_SALT|` + INFORMATION.PO_KEY, INFORMATION.SALT)
+                                    } else if (INFORMATION.TYPE == "INVOICE") {
+                                        await db.DBwrite5(INFORMATION.TO.toLowerCase(), INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|` + INFORMATION.INVOICE_KEY, DATABASE, results.KEY, "WAIT",INFORMATION.FROM.toLowerCase())
+                                        var ID = "PO_BODY|" + INFORMATION.PO_KEY
+                                        db.SetStatusComplete(INFORMATION.TO.toLowerCase(), "PO", ID)
+                                    } else if (INFORMATION.TYPE == "ENDORSE_LOAN") {
+                                        var Check_Endorse = ""
+                                        try {
+                                            Check_Endorse = await db.DBread(INFORMATION.TO.toLowerCase(), INFORMATION.TYPE, `ENDORSE_LOAN_BODY|${INFORMATION.TO.toLowerCase()}|${INFORMATION.BANK.toLowerCase()}|` + `${INFORMATION.DOC_LOAN.toLowerCase()}_${INFORMATION.LOAN_KEY}`)
+                                        } catch (error) {
+                                            // console.log(error)
+                                        }
+                                        if (!Check_Endorse) {
+                                            await db.DBwrite5(INFORMATION.TO.toLowerCase(), INFORMATION.TYPE, `ENDORSE_LOAN_BODY|${INFORMATION.TO.toLowerCase()}|${INFORMATION.BANK.toLowerCase()}|` + `${INFORMATION.DOC_LOAN.toLowerCase()}_${INFORMATION.LOAN_KEY}`, DATABASE, results.KEY, "WAIT",INFORMATION.BANK.toLowerCase())
+                                            if (INFORMATION.DOC_LOAN.toUpperCase() == "INVOICE") {
+                                                var ID = `LOAN_INVOICE_BODY|${INFORMATION.TO.toLowerCase()}|${INFORMATION.BANK.toLowerCase()}|` + INFORMATION.LOAN_KEY || reject("LOAN_KEY name not found")
+                                                db.SetStatusComplete(PackageUser, "LOAN_INVOICE", ID)
+                                            }else {
+                                                if (INFORMATION.DOC_LOAN.toUpperCase() == "PO") {
+                                                    var ID = `LOAN_PO_BODY|${INFORMATION.TO.toLowerCase()}|${INFORMATION.BANK.toLowerCase()}|` + INFORMATION.LOAN_KEY || reject("KEY name not found")
+                                                    db.SetStatusComplete(PackageUser, "LOAN_PO", ID)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                if (decrypted == all) {
+                                    console.log('--------- correct salt -----------')
+                                }
+                            }  
+                        }
                     } catch (error) {
                         // console.log(error)
                     }
