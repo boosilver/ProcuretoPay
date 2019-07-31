@@ -118,6 +118,19 @@ async function DBread(company, collections, key) {
   return data;
 }
 
+async function DBreadStatus(company, collections, key) {
+  var data;
+  db = await MongoClient.connect(url)
+  if (!db) console.log('error to connect database server ')
+  var dbo = db.db(company);
+  result = await dbo.collection(collections).findOne({ _id: key })
+  if (!result) console.log('data not found ')
+  //console.log(result.name);
+  data = result.status
+  db.close();
+
+  return data;
+}
 async function DBreadHash(company, collections, key) {
   var data;
   db = await MongoClient.connect(url)
@@ -228,6 +241,10 @@ function AdminForCom(DB, publickey, privatekey) {
       if (err) throw err;
       db.close();
     });
+    dbo.createCollection("ACCEPT", function (err, res) {
+      if (err) throw err;
+      db.close();
+    });
 
   })
   return;
@@ -314,6 +331,7 @@ module.exports = {
   DBread: DBread,
   DBreadprivate: DBreadprivate,
   DBdelete: DBdelete,
+  DBreadStatus:DBreadStatus,
   readarray: readarray,
   SetStatusComplete: SetStatusComplete,
   SetStatusWait:SetStatusWait,

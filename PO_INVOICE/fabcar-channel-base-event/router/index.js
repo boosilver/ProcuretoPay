@@ -81,8 +81,7 @@ app.post('/Accept', function (req, res, next) {
     // const bcuserName = req.body.FROM.toLowerCase()
     console.log(req.body)
 new toBC(PackageUser).Accept(req.body).then((result) => {
-    res.status(201);
-    res.json(result.message);
+  res.status(201).json(result.message);
   })
   .catch((error) => {
     logger.error(`${functionName} Failed to transfer new Service Request: ${error}`);
@@ -102,8 +101,7 @@ app.post('/CreatePO', function (req, res, next) {
     // const bcuserName = req.body.FROM.toLowerCase()
     console.log(req.body)
 new toBC(PackageUser).CreatePO(req.body).then((result) => {
-    res.status(201);
-    res.json(result.message);
+    res.status(201).json(result.message);
   })
   .catch((error) => {
     logger.error(`${functionName} Failed to transfer new Service Request: ${error}`);
@@ -118,8 +116,7 @@ app.post('/Get', function (req, res, next) {
   let functionName = '[API: POST /api/v1/Get]';
     // const bcuserName = req.body.USER.toLowerCase()
 new toBC(PackageUser).Get(req.body).then((result) => {
-    res.status(201);
-    res.json(result.message);
+    res.status(201).json(result.message);
   })
   .catch((error) => {
     logger.error(`${functionName} Failed to check new Service Request: ${error}`);
@@ -135,8 +132,7 @@ app.post('/Getall', function (req, res, next) {
   let functionName = '[API: POST /api/v1/Getall]';
     // const bcuserName = req.body.USER.toLowerCase()
 new toBC(PackageUser).Getall(req.body).then((result) => {
-    res.status(201);
-    res.json(result.message);
+  res.status(201).json(result.message);
   })
   .catch((error) => {
     logger.error(`${functionName} Failed to check new Service Request: ${error}`);
@@ -152,8 +148,7 @@ app.post('/GetValue', function (req, res, next) {
   let functionName = '[API: POST /api/v1/GetValue]';
     // const bcuserName = req.body.USER.toLowerCase()
 new toBC(PackageUser).GetValue(req.body).then((result) => {
-    res.status(201);
-    res.json(result.message);
+  res.status(201).json(result.message);
   })
   .catch((error) => {
     logger.error(`${functionName} Failed to check new Service Request: ${error}`);
@@ -172,8 +167,7 @@ app.post('/CreateInvoice', function (req, res, next) {
   let functionName = '[API: POST /api/v1/CreateInvoice]';
     // const bcuserName = req.body.FROM.toLowerCase()
 new toBC(PackageUser).CreateInvoice(req.body).then((result) => {
-    res.status(201);
-    res.json(result.message);
+  res.status(201).json(result.message);
   })
   .catch((error) => {
     logger.error(`${functionName} Failed to transfer new Service Request: ${error}`);
@@ -189,8 +183,7 @@ app.post('/CheckInvoice', function (req, res, next) {
   let functionName = '[API: POST /api/v1/CheckInvoice]';
     // const bcuserName = req.body.USER.toLowerCase()
 new toBC(PackageUser).CheckInvoice(req.body).then((result) => {
-    res.status(201);
-    res.json(result.message);
+  res.status(201).json(result.message);
   })
   .catch((error) => {
     logger.error(`${functionName} Failed to check new Service Request: ${error}`);
@@ -210,8 +203,7 @@ app.post('/Loan', function (req, res, next) {
   let functionName = '[API: POST /api/v1/Loan]';
     // const bcuserName = req.body.FROM.toLowerCase()
 new toBC(PackageUser).Loan(req.body).then((result) => {
-    res.status(201);
-    res.json(result.message);
+  res.status(201).json(result.message);
   })
   .catch((error) => {
     logger.error(`${functionName} Failed to transfer new Service Request: ${error}`);
@@ -228,8 +220,7 @@ app.post('/Request_Verify', function (req, res, next) {
   let functionName = '[API: POST /api/v1/Request_Verify]';
     // const bcuserName = req.body.BANK.toLowerCase()
 new toBC(PackageUser).Request_Verify(req.body).then((result) => {
-    res.status(201);
-    res.json(result.message);
+  res.status(201).json(result.message);
   })
   .catch((error) => {
     logger.error(`${functionName} Failed to transfer new Service Request: ${error}`);
@@ -245,8 +236,7 @@ app.post('/endorse_loan', function (req, res, next) {
   let functionName = '[API: POST /api/v1/endorse_loan]';
     // const bcuserName = req.body.BANK.toLowerCase()
 new toBC(PackageUser).endorse_loan(req.body).then((result) => {
-    res.status(201);
-    res.json(result.message);
+  res.status(201).json(result.message);
   })
   .catch((error) => {
     logger.error(`${functionName} Failed to transfer new Service Request: ${error}`);
@@ -261,8 +251,7 @@ app.post('/Success_Invoice', function (req, res, next) {
   let functionName = '[API: POST /api/v1/Success_Invoice]';
     // const bcuserName = req.body.USER.toLowerCase()
 new toBC(PackageUser).Success_Invoice(req.body).then((result) => {
-    res.status(201);
-    res.json(result.message);
+  res.status(201).json(result.message);
   })
   .catch((error) => {
     logger.error(`${functionName} Failed to check new Service Request: ${error}`);
@@ -282,8 +271,7 @@ app.post('/admin/generatekeypair', function (req, res, next) {
     // const bcuserName = req.body.USER.toLowerCase()
     // logger.debug(bcuserName);
     new toBC(PackageUser).GenerateKeyPair(req.body).then((result) => {
-      res.status(201);
-      res.json(result.message);
+      res.status(201).json(result.message);
     })
       .catch((error) => {
         logger.error(`${functionName} Failed to check new Service Request: ${error}`);
@@ -299,8 +287,7 @@ app.post('/Checkkey', function (req, res, next) {
   let functionName = '[API: POST /api/v1/Checkkey]';
     // const bcuserName = req.body.USER.toLowerCase()
 new toBC(PackageUser).Checkkey(req.body).then((result) => {
-    res.status(201);
-    res.json(result.message);
+  res.status(201).json(result.message);
   })
   .catch((error) => {
     logger.error(`${functionName} Failed to check new Service Request: ${error}`);
@@ -316,8 +303,7 @@ app.post('/Get_Blockchain', function (req, res, next) {
   let functionName = '[API: POST /api/v1/Get_Blockchain]';
     // const bcuserName = req.body.USER.toLowerCase()
 new toBC(PackageUser).Get_Blockchain(req.body).then((result) => {
-    res.status(201);
-    res.json(result.message);
+  res.status(201).json(result.message);
   })
   .catch((error) => {
     logger.error(`${functionName} Failed to check new Service Request: ${error}`);
@@ -334,8 +320,7 @@ app.post('/Reject', function (req, res, next) {
     // const bcuserName = req.body.USER.toLowerCase()
     // logger.debug(bcuserName);
     new toBC(PackageUser).Reject(req.body).then((result) => {
-      res.status(201);
-      res.json(result.message);
+      res.status(201).json(result.message);
     })
       .catch((error) => {
         logger.error(`${functionName} Failed to check new Service Request: ${error}`);
@@ -352,8 +337,7 @@ app.post('/RejectEndorse', function (req, res, next) {
     // const bcuserName = req.body.USER.toLowerCase()
     // logger.debug(bcuserName);
     new toBC(PackageUser).RejectEndorse(req.body).then((result) => {
-      res.status(201);
-      res.json(result.message);
+      res.status(201).json(result.message);
     })
       .catch((error) => {
         logger.error(`${functionName} Failed to check new Service Request: ${error}`);
@@ -370,8 +354,22 @@ app.get('/GetList', function (req, res, next) {
   let functionName = '[API: POST /api/v1/GetList]';
     // const bcuserName = req.body.USER.toLowerCase()
 new toBC(PackageUser).GetList().then((result) => {
-    res.status(201);
-    res.json(result.message);
+  res.status(201).json(result.message);
+  })
+  .catch((error) => {
+    logger.error(`${functionName} Failed to check new Service Request: ${error}`);
+    res.status(500);
+    res.json({
+      code: 500,
+      message: `Failed to check new Service Request: ${error}`
+    });
+  });
+}); 
+app.get('/GetListall', function (req, res, next) {
+  let functionName = '[API: POST /api/v1/GetListall]';
+    // const bcuserName = req.body.USER.toLowerCase()
+new toBC(PackageUser).GetListall().then((result) => {
+  res.status(201).json(result.message);
   })
   .catch((error) => {
     logger.error(`${functionName} Failed to check new Service Request: ${error}`);
@@ -386,8 +384,7 @@ app.get('/GetList_Loan', function (req, res, next) {
   let functionName = '[API: POST /api/v1/GetList_Loan]';
     // const bcuserName = req.body.USER.toLowerCase()
 new toBC(PackageUser).GetList_Loan().then((result) => {
-    res.status(201);
-    res.json(result.message);
+  res.status(201).json(result.message);
   })
   .catch((error) => {
     logger.error(`${functionName} Failed to check new Service Request: ${error}`);

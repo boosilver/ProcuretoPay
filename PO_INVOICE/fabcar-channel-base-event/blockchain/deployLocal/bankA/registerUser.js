@@ -53,16 +53,16 @@ Fabric_Client.newDefaultKeyValueStore({ path: store_path
 
     // at this point we should have the admin user
     // first need to register the user with the CA server
-    return fabric_ca_client.register({enrollmentID: 'bankA', affiliation: 'org1.department1',role: 'client'}, admin_user);
+    return fabric_ca_client.register({enrollmentID: 'banka', affiliation: 'org1.department1',role: 'client'}, admin_user);
 }).then((secret) => {
     // next we need to enroll the user with CA server
-    console.log('Successfully registered bankA - secret:'+ secret);
+    console.log('Successfully registered banka - secret:'+ secret);
 
-    return fabric_ca_client.enroll({enrollmentID: 'bankA', enrollmentSecret: secret});
+    return fabric_ca_client.enroll({enrollmentID: 'banka', enrollmentSecret: secret});
 }).then((enrollment) => {
-  console.log('Successfully enrolled member user "bankA" ');
+  console.log('Successfully enrolled member user "banka" ');
   return fabric_client.createUser(
-     {username: 'bankA',
+     {username: 'banka',
      mspid: 'Org1MSP',
      cryptoContent: { privateKeyPEM: enrollment.key.toBytes(), signedCertPEM: enrollment.certificate }
      });
@@ -71,7 +71,7 @@ Fabric_Client.newDefaultKeyValueStore({ path: store_path
 
      return fabric_client.setUserContext(member_user);
 }).then(()=>{
-     console.log('bankA was successfully registered and enrolled and is ready to interact with the fabric network');
+     console.log('banka was successfully registered and enrolled and is ready to interact with the fabric network');
 
 }).catch((err) => {
     console.error('Failed to register: ' + err);

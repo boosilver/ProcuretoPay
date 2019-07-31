@@ -1,0 +1,37 @@
+{
+    "blockchain": {
+        "address": "CompanyA of Thailand 11600  New Petchaburi Rd. Khwaeng Makkasan Khet Ratchathewi Bangkok 10400 Thailand",
+        "type": "hlfv1",
+        "orderers": [{
+            "url": "grpc://localhost:7050",
+            "sslHostname": "localhost",
+            "cert": ""
+        }],
+        "ca": {
+            "url": "http://localhost:8054",
+            "name": "ca2.example.com",
+            "cert": ""
+        },
+        "peers": [{
+            "requestURL": "grpc://localhost:8051",
+            "eventUrl": "grpc://localhost:8053",
+            "sslHostname": "localhost",
+            "cert": ""
+        }
+        ],
+        "keyValStore": {
+            "fileSystem": "blockchain/deployLocal/companya/hfc-key-store/"
+        },
+        "channel": "mychannel",
+        "chaincodeId": "fabcar",
+       
+        "mspId": "Org2MSP",
+        "organizationId": "org2",
+        "adminCredentials": {
+            "enrollmentId": "admin",
+            "enrollmentSecret": "adminpw"
+        },
+        "timeout": 300000
+       
+    }
+}

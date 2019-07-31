@@ -20,7 +20,7 @@
         }
         ],
         "keyValStore": {
-            "fileSystem": "blockchain/deployLocal/bankB/hfc-key-store/"
+            "fileSystem": "blockchain/deployLocal/bankb/hfc-key-store/"
         },
         "channel": "mychannel",
         "chaincodeId": "fabcar",

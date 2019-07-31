@@ -44,13 +44,13 @@ Fabric_Client.newDefaultKeyValueStore({
     fabric_client.setCryptoSuite(crypto_suite);
 
     // get the enrolled user from persistence, this user will sign all requests
-    return fabric_client.getUserContext('bankB', true);
+    return fabric_client.getUserContext('bankb', true);
 }).then((user_from_store) => {
     if (user_from_store && user_from_store.isEnrolled()) {
-        console.log('Successfully loaded bankB from persistence');
+        console.log('Successfully loaded bankb from persistence');
         member_user = user_from_store;
     } else {
-        throw new Error('Failed to get bankB.... run registerUser.js');
+        throw new Error('Failed to get bankb.... run registerUser.js');
     }
 
     return 1
@@ -67,7 +67,7 @@ Fabric_Client.newDefaultKeyValueStore({
             ///localhost org1 peer0 
             ChannelEventArray.push(channel.newChannelEventHub("localhost:10051"))
         })
-        console.log('bankB');
+        console.log('bankb');
         ChannelEventArray.forEach(ChannelEvent => {
             var ChainCodeEvent = ChannelEvent.registerChaincodeEvent(chaincodeid, chaincodeEventName,
                 async (event, block_num, txnid, status) => {
@@ -84,7 +84,7 @@ Fabric_Client.newDefaultKeyValueStore({
                     const key = new NodeRSA();
                     // console.log(event.payload.toString('utf8'))
                     const ciphertext = results.VALUE
-                    var keyprivate = await db.DBreadprivate("bankB", "CompanyData", "bankB")
+                    var keyprivate = await db.DBreadprivate("bankb", "CompanyData", "bankb")
                     key.importKey(keyprivate, 'pkcs1-private-pem');
 
 
@@ -101,97 +101,127 @@ Fabric_Client.newDefaultKeyValueStore({
                         var LOAN = JSON.parse(decrypted) //ค่าใบขอกู้ทั้งหมด
                         // console.log(LOAN.INVOICE) /// ค่าใบอินวอย
 
-                        var publckey = await db.DBreadPublic("bankB", "CompanyData", "bankB")
+                        var publckey = await db.DBreadPublic("bankb", "CompanyData", "bankb")
                         key.importKey(publckey, 'pkcs1-public-pem');
                         // console.log(INFORMATION.TYPE)
-                        if(INFORMATION.TYPE == "ENDORSE_LOAN"){
-                            var ID = `ENDORSE_LOAN_BODY|${INFORMATION.TO}|${INFORMATION.BANK.toLowerCase()}|${INFORMATION.DOC_LOAN.toLowerCase()}_${INFORMATION.LOAN_KEY}`
-                            db.SetStatusComplete(PackageUser, "ENDORSE_LOAN", ID)
-                        }else{
-                            if (INFORMATION.TYPE == "Auto Verify") {
-                                // console.log(INFORMATION.PO)
-                                if (INFORMATION.PO == "data not found") {
-    
-                                } else {
-                                    var PO = INFORMATION.PO
-                                    var checkPO = ""
-    
-                                    try {
-                                        checkPO = await db.DBread(INFORMATION.BANK, PO.TYPE, `${PO.TYPE}_BODY|` + PO.PO_KEY)
-                                    } catch (error) {
-                                        // console.log(error)
-                                    }
-                                    // console.log(checkPO)
-                                    if (checkPO == "") {
-                                        // console.log("aiaiaiaiai")
-                                        db.DBwrite3(INFORMATION.BANK, PO.TYPE, `${PO.TYPE}_BODY|` + PO.PO_KEY, PO, results.KEY) //เก็บข้อมูลใบกู้
-                                        db.DBwrite(INFORMATION.BANK, "PO", `PO_SALT_2|` + LOAN.PO.PO_KEY, LOAN.SALT)
-                                        // db.DBwrite(INFORMATION.BANK,PO.TYPE , PO.PO_KEY, Autociphertext)
-                                    }
-                                }
-    
-                                // db.DBwrite(INFORMATION.BANK,PO.TYPE , PO.KEY, Autociphertext)
-                                ////////////////////////////////////////////////
+                        if (INFORMATION.TYPE == "ACCEPT") {
+                            var collections = "ACCEPT"
+                            var checkACCEPT = ""
+                            try {
+                                // console.log("kuyyyysy")
+                                checkACCEPT = await db.DBread(PackageUser, collections, `ACCEPT_BODY|${INFORMATION.BANK.toLowerCase()}|${INFORMATION.TO.toLowerCase()}|` + `${INFORMATION.DOC_LOAN.toUpperCase()}_${INFORMATION.LOAN_KEY}`)
+                                // console.log("kuyyyfffffyy")
+                                // console.log(checkACCEPT)
+                                // if(checkACCEPT == ""){
+                                //     console.log("kuyyssssyyy")
+                                //     db.DBwrite5(PackageUser, collections, `ACCEPT_BODY|${INFORMATION.BANK.toLowerCase()}|${INFORMATION.TO.toLowerCase()}|` + `${INFORMATION.DOC_LOAN.toUpperCase()}_${INFORMATION.LOAN_KEY}`, INFORMATION, results.KEY, "WAIT", INFORMATION.TO.toLowerCase())
+                                //     var ID = `ENDORSE_LOAN_BODY|${INFORMATION.TO}|${INFORMATION.BANK.toLowerCase()}|${INFORMATION.DOC_LOAN.toLowerCase()}_${INFORMATION.LOAN_KEY}`
+                                //     db.SetStatusComplete(PackageUser, "ENDORSE_LOAN", ID)
+                                // }
+                            } catch (error) {
+                                db.DBwrite5(PackageUser, collections, `ACCEPT_BODY|${INFORMATION.BANK.toLowerCase()}|${INFORMATION.TO.toLowerCase()}|` + `${INFORMATION.DOC_LOAN.toUpperCase()}_${INFORMATION.LOAN_KEY}`, INFORMATION, results.KEY, "WAIT", INFORMATION.TO.toLowerCase())
+                                var ID = `ENDORSE_LOAN_BODY|${INFORMATION.TO}|${INFORMATION.BANK.toLowerCase()}|${INFORMATION.DOC_LOAN.toUpperCase()}_${INFORMATION.LOAN_KEY}`
+                                db.SetStatusComplete(PackageUser, "ENDORSE_LOAN", ID)
+                            }
+                        } else {
+                            if (INFORMATION.TYPE == "reject_LOAN_INVOICE") {
+                                var ID = `LOAN_INVOICE_BODY|${INFORMATION.FROM}|${PackageUser}|` + INFORMATION.LOAN_KEY
+                                db.SetStatusReject(PackageUser, "LOAN_INVOICE", ID)
                             } else {
-                                var checkID = ""
-                                try {
-                                    // checkhash = await db.DBread(INFORMATION.BANK,INFORMATION.TYPE,results.KEY)
-                                    // checkID = await db.DBread(INFORMATION.TO, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|`+INFORMATION.KEY)
-                                    checkID = await db.DBread(INFORMATION.BANK, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|${INFORMATION.FROM.toLowerCase()}|${INFORMATION.BANK.toLowerCase()}|` + INFORMATION.LOAN_KEY)
-                                    // checkinvoice = await db.DBread(INFORMATION.BANK,INVOICE.INVOICE.TYPE,INVOICE.INVOICE.KEY)  
-                                } catch (error) {
-                                    // console.log(error)
-                                }
-                                if (!checkID) {
-                                    // db.DBwrite(INFORMATION.BANK,INFORMATION.TYPE , results.KEY, results.VALUE) //เก็บแฮด คู่ เอ็นคลิบ
-                                    if (INFORMATION.TYPE == "LOAN_INVOICE") {
-                                        db.DBwrite5(INFORMATION.BANK, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|${INFORMATION.FROM.toLowerCase()}|${INFORMATION.BANK.toLowerCase()}|` + INFORMATION.LOAN_KEY, INFORMATION, results.KEY, "WAIT",INFORMATION.FROM.toLowerCase()) //เก็บข้อมูลใบกู้
-                                        var Check_Invoice = ""
-                                        var Check_Salt = ""
-                                        try {
-                                            Check_Invoice = await db.DBread(INFORMATION.BANK, LOAN.INVOICE.TYPE, `${LOAN.INVOICE.TYPE}_BODY|` + LOAN.INVOICE.INVOICE_KEY)
-                                        } catch (error) {
-                                            // console.log(error)
+                                if (INFORMATION.TYPE == "reject_LOAN_PO") {
+                                    console.log(";;;;;; ", `LOAN_PO_BODY|${INFORMATION.FROM}|${PackageUser}|` + INFORMATION.LOAN_KEY)
+                                    var ID = `LOAN_PO_BODY|${INFORMATION.FROM}|${PackageUser}|` + INFORMATION.LOAN_KEY
+                                    console.log("eieiei")
+                                    db.SetStatusReject(PackageUser, "LOAN_PO", ID)
+                                    console.log("ei**********ei")
+                                } else {
+                                    if (INFORMATION.TYPE == "Auto Verify") {
+                                        // console.log(INFORMATION.PO)
+                                        if (INFORMATION.PO == "data not found") {
+
+                                        } else {
+                                            var PO = INFORMATION.PO
+                                            var checkPO = ""
+
+                                            try {
+                                                checkPO = await db.DBread(INFORMATION.BANK, PO.TYPE, `${PO.TYPE}_BODY|` + PO.PO_KEY)
+                                            } catch (error) {
+                                                // console.log(error)
+                                            }
+                                            // console.log(checkPO)
+                                            if (checkPO == "") {
+                                                // console.log("aiaiaiaiai")
+                                                db.DBwrite3(INFORMATION.BANK, PO.TYPE, `${PO.TYPE}_BODY|` + PO.PO_KEY, PO, results.KEY) //เก็บข้อมูลใบกู้
+                                                db.DBwrite(INFORMATION.BANK, "PO", `PO_SALT_2|` + LOAN.PO.PO_KEY, LOAN.SALT)
+                                                // db.DBwrite(INFORMATION.BANK,PO.TYPE , PO.PO_KEY, Autociphertext)
+                                            }
                                         }
-                                        if (!Check_Invoice) {
-                                            db.DBwrite(INFORMATION.BANK, LOAN.INVOICE.TYPE, `${LOAN.INVOICE.TYPE}_BODY|` + LOAN.INVOICE.INVOICE_KEY, LOAN.INVOICE) // เก็บข้อมูลใบอินวอย
-                                        }
-                                        try {
-                                            Check_Salt = await db.DBread(INFORMATION.BANK, "PO", `PO_SALT|` + LOAN.INVOICE.PO_KEY)
-                                        } catch (error) {
-                                            // console.log(error)
-                                        }
-                                        if (!Check_Salt) {
-                                            db.DBwrite(INFORMATION.BANK, "PO", `PO_SALT|` + LOAN.INVOICE.PO_KEY, LOAN.SALT)
-                                        }
+
+                                        // db.DBwrite(INFORMATION.BANK,PO.TYPE , PO.KEY, Autociphertext)
+                                        ////////////////////////////////////////////////
                                     } else {
-                                        db.DBwrite5(INFORMATION.BANK, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|${INFORMATION.FROM.toLowerCase()}|${INFORMATION.BANK.toLowerCase()}|` + INFORMATION.LOAN_KEY, INFORMATION, results.KEY, "WAIT",INFORMATION.FROM.toLowerCase()) //เก็บข้อมูลใบกู้
-                                        var Check_PO = ""
-                                        var Check_Salt = ""
+                                        var checkID = ""
                                         try {
-                                            Check_PO = await db.DBread(INFORMATION.BANK, LOAN.PO.TYPE, `${LOAN.PO.TYPE}_BODY|` + LOAN.PO.PO_KEY)
+                                            // checkhash = await db.DBread(INFORMATION.BANK,INFORMATION.TYPE,results.KEY)
+                                            // checkID = await db.DBread(INFORMATION.TO, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|`+INFORMATION.KEY)
+                                            checkID = await db.DBread(INFORMATION.BANK, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|${INFORMATION.FROM.toLowerCase()}|${INFORMATION.BANK.toLowerCase()}|` + INFORMATION.LOAN_KEY)
+                                            // checkinvoice = await db.DBread(INFORMATION.BANK,INVOICE.INVOICE.TYPE,INVOICE.INVOICE.KEY)  
                                         } catch (error) {
                                             // console.log(error)
                                         }
-                                        if (!Check_PO) {
-                                            db.DBwrite(INFORMATION.BANK, LOAN.PO.TYPE, `${LOAN.PO.TYPE}_BODY|` + LOAN.PO.PO_KEY, LOAN.PO) // เก็บข้อมูลใบอินวอย
+                                        if (!checkID) {
+                                            // db.DBwrite(INFORMATION.BANK,INFORMATION.TYPE , results.KEY, results.VALUE) //เก็บแฮด คู่ เอ็นคลิบ
+                                            if (INFORMATION.TYPE == "LOAN_INVOICE") {
+                                                db.DBwrite5(INFORMATION.BANK, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|${INFORMATION.FROM.toLowerCase()}|${INFORMATION.BANK.toLowerCase()}|` + INFORMATION.LOAN_KEY, INFORMATION, results.KEY, "WAIT", INFORMATION.FROM.toLowerCase()) //เก็บข้อมูลใบกู้
+                                                var Check_Invoice = ""
+                                                var Check_Salt = ""
+                                                try {
+                                                    Check_Invoice = await db.DBread(INFORMATION.BANK, LOAN.INVOICE.TYPE, `${LOAN.INVOICE.TYPE}_BODY|` + LOAN.INVOICE.INVOICE_KEY)
+                                                } catch (error) {
+                                                    // console.log(error)
+                                                }
+                                                if (!Check_Invoice) {
+                                                    db.DBwrite(INFORMATION.BANK, LOAN.INVOICE.TYPE, `${LOAN.INVOICE.TYPE}_BODY|` + LOAN.INVOICE.INVOICE_KEY, LOAN.INVOICE) // เก็บข้อมูลใบอินวอย
+                                                }
+                                                try {
+                                                    Check_Salt = await db.DBread(INFORMATION.BANK, "PO", `PO_SALT|` + LOAN.INVOICE.PO_KEY)
+                                                } catch (error) {
+                                                    // console.log(error)
+                                                }
+                                                if (!Check_Salt) {
+                                                    db.DBwrite(INFORMATION.BANK, "PO", `PO_SALT|` + LOAN.INVOICE.PO_KEY, LOAN.SALT)
+                                                }
+                                            } else {
+                                                db.DBwrite5(INFORMATION.BANK, INFORMATION.TYPE, `${INFORMATION.TYPE}_BODY|${INFORMATION.FROM.toLowerCase()}|${INFORMATION.BANK.toLowerCase()}|` + INFORMATION.LOAN_KEY, INFORMATION, results.KEY, "WAIT", INFORMATION.FROM.toLowerCase()) //เก็บข้อมูลใบกู้
+                                                var Check_PO = ""
+                                                var Check_Salt = ""
+                                                try {
+                                                    Check_PO = await db.DBread(INFORMATION.BANK, LOAN.PO.TYPE, `${LOAN.PO.TYPE}_BODY|` + LOAN.PO.PO_KEY)
+                                                } catch (error) {
+                                                    // console.log(error)
+                                                }
+                                                if (!Check_PO) {
+                                                    db.DBwrite(INFORMATION.BANK, LOAN.PO.TYPE, `${LOAN.PO.TYPE}_BODY|` + LOAN.PO.PO_KEY, LOAN.PO) // เก็บข้อมูลใบอินวอย
+                                                }
+                                                try {
+                                                    Check_Salt = await db.DBread(INFORMATION.BANK, "PO", `PO_SALT|` + LOAN.PO.PO_KEY)
+                                                } catch (error) {
+                                                    // console.log(error)
+                                                }
+                                                if (!Check_Salt) {
+                                                    db.DBwrite(INFORMATION.BANK, "PO", `PO_SALT|` + LOAN.PO.PO_KEY, LOAN.SALT)
+                                                }
+                                            }
                                         }
-                                        try {
-                                            Check_Salt = await db.DBread(INFORMATION.BANK, "PO", `PO_SALT|` + LOAN.PO.PO_KEY)
-                                        } catch (error) {
-                                            // console.log(error)
-                                        }
-                                        if (!Check_Salt) {
-                                            db.DBwrite(INFORMATION.BANK, "PO", `PO_SALT|` + LOAN.PO.PO_KEY, LOAN.SALT)
+                                        if (decrypted == all) {
+                                            console.log('--------- correct salt -----------')
                                         }
                                     }
-                                }
-                                if (decrypted == all) {
-                                    console.log('--------- correct salt -----------')
                                 }
                             }
+
                         }
-                        
+
 
                     } catch (error) {
                         // console.log(error)
